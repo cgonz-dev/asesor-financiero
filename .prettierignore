@@ -9,3 +9,4 @@ AGENTS.md
 README.md
 docs/**/*.md
 packages/**/*.md
+apps/mobile/expo-env.d.ts

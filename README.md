@@ -131,6 +131,32 @@ final:
 
 No se debe guardar una IP personal, token o secreto en archivos versionados.
 
+## Probar desde un celular en la red local
+
+Conecta la computadora y el celular a la misma red Wi-Fi y, desde la raíz del proyecto, ejecuta:
+
+```bash
+pnpm dev:lan
+```
+
+El comando detecta una IPv4 privada activa, inicia API y Expo Web para la red local y muestra URLs
+como `http://<IP-LAN>:8081` para la aplicación y
+`http://<IP-LAN>:3000/api/v1/health` para health. Si hay más de una interfaz útil, selecciona una
+con `LAN_IP`; en PowerShell, por ejemplo:
+
+```powershell
+$env:LAN_IP = '192.0.2.10'
+pnpm dev:lan
+```
+
+Primero abre la URL de health desde el celular y confirma la respuesta JSON. Después abre la URL de
+la aplicación. El modo LAN configura la API del navegador con esa misma IPv4 y una allowlist CORS
+que conserva solo los orígenes locales y el origen LAN concreto.
+
+Si el celular no puede abrir las URLs, revisa manualmente Windows Firewall y permite Node.js/Expo
+en redes **privadas** para los puertos 3000 y 8081; este comando no modifica reglas de Firewall.
+No es un despliegue público ni crea un APK. Presiona `Ctrl+C` para detener ambos procesos.
+
 ## Controles
 
 ```bash
