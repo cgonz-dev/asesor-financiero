@@ -1,0 +1,15 @@
+{
+  "name": "@copiloto/typescript-config",
+  "version": "0.1.0",
+  "private": true,
+  "files": [
+    "base.json",
+    "library.json",
+    "node.json"
+  ],
+  "exports": {
+    "./base": "./base.json",
+    "./library": "./library.json",
+    "./node": "./node.json"
+  }
+}

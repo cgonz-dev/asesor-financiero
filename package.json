@@ -1,0 +1,35 @@
+{
+  "name": "copiloto-financiero",
+  "version": "0.1.0",
+  "private": true,
+  "description": "Monorepo de Copiloto Financiero",
+  "packageManager": "pnpm@11.9.0",
+  "engines": {
+    "node": ">=24 <25",
+    "pnpm": ">=11.9.0 <12"
+  },
+  "scripts": {
+    "dev": "pnpm --filter @copiloto/contracts build && pnpm --parallel --filter @copiloto/api --filter @copiloto/mobile dev",
+    "dev:api": "pnpm --filter @copiloto/contracts build && pnpm --filter @copiloto/api dev",
+    "dev:mobile": "pnpm --filter @copiloto/contracts build && pnpm --filter @copiloto/mobile dev",
+    "lint": "eslint .",
+    "format": "prettier --write .",
+    "format:check": "prettier --check .",
+    "typecheck": "pnpm -r --if-present typecheck",
+    "test": "vitest run",
+    "test:unit": "vitest run --config vitest.unit.config.ts",
+    "test:integration": "vitest run --config vitest.integration.config.ts",
+    "test:e2e": "vitest run --config vitest.e2e.config.ts",
+    "build": "pnpm -r --if-present build",
+    "openapi:generate": "pnpm --filter @copiloto/contracts build && pnpm --filter @copiloto/api openapi:generate",
+    "openapi:check": "pnpm --filter @copiloto/contracts build && pnpm --filter @copiloto/api openapi:check"
+  },
+  "devDependencies": {
+    "@copiloto/eslint-config": "workspace:*",
+    "@types/node": "24.13.3",
+    "eslint": "10.8.0",
+    "prettier": "3.9.6",
+    "typescript": "6.0.3",
+    "vitest": "4.0.18"
+  }
+}

@@ -1,0 +1,11 @@
+node_modules/
+dist/
+coverage/
+.expo/
+.git/
+pnpm-lock.yaml
+apps/api/openapi/openapi.json
+AGENTS.md
+README.md
+docs/**/*.md
+packages/**/*.md
