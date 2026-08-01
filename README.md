@@ -9,8 +9,11 @@ estructuradas y explicaciones útiles, sin convertir a la IA en fuente de verdad
 
 ## Estado actual
 
-- **Fase 1 iniciada:** se completó su historia inicial de bootstrap técnico y health contractual.
-- La Fase 1 completa continúa abierta.
+- **Fase 1 cerrada:** bootstrap reproducible, health contractual, OpenAPI, cliente móvil mínimo,
+  CI inicial y modo LAN completados y verificados.
+- La ejecución real de GitHub Actions terminó correctamente en verde.
+- **Fase 2 no ha iniciado.** Sus bloqueadores inmediatos son ADR-005 (autenticación) y ADR-006
+  (autorización, roles, visibilidad y aislamiento).
 - Existe código mínimo no financiero para API, móvil, contratos y configuración compartida.
 - No existen autenticación, base de datos, ledger, operaciones monetarias ni integración de IA.
 - ADR-001 y ADR-007 permanecen aceptados.
@@ -222,5 +225,5 @@ Antes de modificar el proyecto:
 
 ## Próxima historia recomendada
 
-Revisar, versionar y publicar la CI inicial; después comprobar una ejecución real en GitHub Actions
-antes de declarar cerrada la Fase 1.
+Resolver ADR-005 sobre proveedor, flujo de autenticación y ciclo de tokens móvil. Fase 2 no debe
+iniciarse hasta resolver también ADR-006 sobre autorización, roles, visibilidad y aislamiento.

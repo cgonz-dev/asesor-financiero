@@ -2,7 +2,12 @@
 
 ## Estado
 
-**Implementación parcial de Fase 1.** El bootstrap técnico, health contractual y cliente móvil mínimo ya existen. El resto de la tecnología y los límites descritos continúan como dirección inicial; las decisiones marcadas como ADR pendiente deben resolverse antes de que su fase dependa de ellas.
+**Fase 1 cerrada.** El bootstrap técnico, health contractual, cliente móvil mínimo, OpenAPI
+reproducible, CI inicial y modo de desarrollo LAN están implementados y validados. La ejecución
+remota de GitHub Actions terminó correctamente en verde. El resto de la tecnología y los límites
+descritos continúan como dirección inicial; las decisiones marcadas como ADR pendiente deben
+resolverse antes de que su fase dependa de ellas. Fase 2 no ha iniciado y permanece bloqueada por
+ADR-005 y ADR-006.
 
 ## Objetivos arquitectónicos
 

@@ -97,6 +97,20 @@ Código, dependencias, scaffolding, base de datos, prototipos ejecutables, prove
 
 Crear un workspace reproducible que permita desarrollar aplicaciones y paquetes con controles de calidad uniformes, sin implementar aún funcionalidades financieras.
 
+### Estado de cierre
+
+**Cerrada.** La evidencia de cierre incluye:
+
+- monorepo pnpm con lockfile reproducible, Node 24 y pnpm 11.9.0;
+- `apps/api`, `apps/mobile` y paquetes compartidos de contratos, dominio, configuración, lint y TypeScript;
+- API NestJS y shell Expo mínimos, `GET /api/v1/health`, contrato compartido, cliente REST tipado y OpenAPI 3.1 reproducible;
+- scripts de lint, formato, typecheck, pruebas generales/unitarias/integración/E2E, build, OpenAPI y compatibilidad de peers;
+- CI de GitHub Actions con instalación congelada, detección de OpenAPI desactualizado y ejecución remota confirmada en verde;
+- configuración de entorno sin secretos y modo de desarrollo LAN con CORS de allowlist explícita;
+- validación local de todos los controles anteriores durante el cierre de fase.
+
+No se introdujeron autenticación, hogares, integrantes, base de datos, Prisma, ledger, funcionalidad financiera ni IA. Fase 2 no ha iniciado; sus bloqueadores son ADR-005 y ADR-006.
+
 ### Alcance
 
 - pnpm workspaces y estructura validada.
