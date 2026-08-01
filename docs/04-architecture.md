@@ -251,6 +251,10 @@ Se requieren:
 
 No se registrarán mensajes completos, tokens, números de cuenta, importes asociados a identidad u otros datos financieros sin justificación y protección explícitas.
 
+La CI inicial se implementa con GitHub Actions: en cambios a `main`, pull requests hacia `main` y
+ejecuciones manuales valida la instalación reproducible, los controles del monorepo y que el
+artefacto OpenAPI versionado permanezca actualizado. No despliega ni publica artefactos.
+
 ## Estrategia de pruebas
 
 - unitarias para valores, reglas, balance, redondeo y estados;

@@ -134,6 +134,7 @@ No se debe guardar una IP personal, token o secreto en archivos versionados.
 ## Controles
 
 ```bash
+pnpm install --frozen-lockfile
 pnpm lint
 pnpm format
 pnpm format:check
@@ -145,12 +146,24 @@ pnpm test:e2e
 pnpm build
 pnpm openapi:generate
 pnpm openapi:check
+pnpm peers check
+git diff --check
 ```
 
 `openapi:check` compara el artefacto existente con una generación canónica y falla si está
 desactualizado. El artefacto generado queda fuera de Prettier para que ambos controles no compitan.
 El formato cubre los demás archivos técnicos; la documentación fundacional permanece fuera del
 formateo automático para evitar reescrituras masivas no relacionadas.
+
+## Integración continua
+
+El workflow [Copiloto Financiero CI](.github/workflows/ci.yml) se ejecuta en cada push a `main`,
+en pull requests dirigidos a `main` y de forma manual. Instala con lockfile congelado y ejecuta los
+controles anteriores, incluida la generación y comprobación de OpenAPI; también falla si el
+artefacto generado difiere del versionado. No despliega ni publica paquetes.
+
+Para reproducirlo localmente, ejecuta el bloque de **Controles** desde la raíz del monorepo. La
+ejecución remota se consulta en la pestaña [Actions del repositorio](https://github.com/cgonz-dev/asesor-financiero/actions).
 
 ## Alcance del MVP
 
@@ -176,12 +189,12 @@ Antes de modificar el proyecto:
 
 ## Limitaciones conocidas
 
-- La verificación automática en CI y el análisis de cambios incompatibles de OpenAPI aún no existen.
+- El análisis de cambios incompatibles de OpenAPI aún no existe; CI solo verifica que el artefacto
+  generado permanezca actualizado.
 - No se validó un binario nativo en Android/iOS; sí se validó la exportación web de Expo.
 - Health solo representa la vida del proceso porque todavía no hay dependencias externas.
 
 ## Próxima historia recomendada
 
-Agregar la CI inicial de Fase 1 para ejecutar los controles raíz, verificar el lockfile y bloquear un
-artefacto OpenAPI desactualizado o un cambio contractual incompatible; no se implementa en esta
-tarea.
+Revisar, versionar y publicar la CI inicial; después comprobar una ejecución real en GitHub Actions
+antes de declarar cerrada la Fase 1.
