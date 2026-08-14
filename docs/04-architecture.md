@@ -6,8 +6,8 @@
 reproducible, CI inicial y modo de desarrollo LAN están implementados y validados. La ejecución
 remota de GitHub Actions terminó correctamente en verde. El resto de la tecnología y los límites
 descritos continúan como dirección inicial; las decisiones marcadas como ADR pendiente deben
-resolverse antes de que su fase dependa de ellas. Fase 2 no ha iniciado y permanece bloqueada por
-ADR-005 y ADR-006.
+resolverse antes de que su fase dependa de ellas. ADR-005 está aceptado; Fase 2 no ha iniciado y
+permanece bloqueada por ADR-006.
 
 ## Objetivos arquitectónicos
 
@@ -33,7 +33,7 @@ ADR-005 y ADR-006.
 | Contratos | Paquete compartido con schemas Zod y tipos inferidos | Zod 4.4.3 y `nestjs-zod` 5.5.0 validados en Fase 1 según [ADR-007](adr/0007-contratos-validacion-openapi-y-cliente.md) |
 | Asistente | OpenAI Responses API | Tool calling y salidas estructuradas |
 | Procesos programados | Redis + BullMQ | Solo al implementar recordatorios/jobs |
-| Autenticación | Pendiente de ADR | Debe soportar móvil y hogares |
+| Autenticación | Auth0 mediante OAuth 2.0/OIDC | Decidida en [ADR-005](adr/0005-autenticacion-y-ciclo-de-sesion-movil.md); todavía no implementada |
 | Panel web | Fuera del MVP | Previsto posteriormente |
 | Bancos/pagos | Fuera del MVP | Sin conexiones ni ejecución automática |
 
@@ -279,7 +279,7 @@ artefacto OpenAPI versionado permanezca actualizado. No despliega ni publica art
 | ADR-002 | Representación monetaria, moneda, redondeo y división | Fase 3 | Pendiente |
 | ADR-003 | Modelo de ledger, signos, cuentas técnicas e invariantes en DB | Fase 3 | Pendiente |
 | ADR-004 | Estados, vista previa, confirmación y correcciones | Fase 3 | Pendiente |
-| ADR-005 | Proveedor/flujo de autenticación y ciclo de tokens móvil | Fase 2 | Pendiente |
+| [ADR-005](adr/0005-autenticacion-y-ciclo-de-sesion-movil.md) | Autenticación y ciclo seguro de sesiones móviles | Fase 2 | Aceptado |
 | ADR-006 | Autorización, roles, visibilidad y aislamiento/RLS | Fase 2 | Pendiente |
 | [ADR-007](adr/0007-contratos-validacion-openapi-y-cliente.md) | Contratos compartidos, validación, OpenAPI, cliente tipado y versionado de API | Fase 1 | Aceptado |
 | ADR-008 | Idempotencia, concurrencia y alcance de claves | Fase 3 | Pendiente |
@@ -296,4 +296,4 @@ artefacto OpenAPI versionado permanezca actualizado. No despliega ni publica art
 | ADR-019 | Observabilidad, auditoría y redacción de datos sensibles | Fase 3; completar antes de beta | Pendiente |
 | ADR-020 | Backups, restauración, RPO/RTO y continuidad | Antes de beta | Pendiente |
 
-ADR-001 y ADR-007 están aceptados. Los demás IDs son reservas de trabajo hasta que exista contexto, alternativas y una decisión revisable.
+ADR-001, ADR-005 y ADR-007 están aceptados. ADR-006 permanece pendiente y bloquea el inicio de Fase 2. Los demás IDs son reservas de trabajo hasta que exista contexto, alternativas y una decisión revisable.

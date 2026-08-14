@@ -109,7 +109,7 @@ Crear un workspace reproducible que permita desarrollar aplicaciones y paquetes 
 - configuración de entorno sin secretos y modo de desarrollo LAN con CORS de allowlist explícita;
 - validación local de todos los controles anteriores durante el cierre de fase.
 
-No se introdujeron autenticación, hogares, integrantes, base de datos, Prisma, ledger, funcionalidad financiera ni IA. Fase 2 no ha iniciado; sus bloqueadores son ADR-005 y ADR-006.
+No se introdujeron autenticación, hogares, integrantes, base de datos, Prisma, ledger, funcionalidad financiera ni IA. Fase 2 no ha iniciado; ADR-005 está aceptado y ADR-006 es su bloqueador documental restante.
 
 ### Alcance
 

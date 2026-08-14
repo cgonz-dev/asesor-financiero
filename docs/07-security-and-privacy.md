@@ -65,7 +65,7 @@ Los nombres finales de roles, permisos de administración, consentimiento de par
 
 ## Autenticación y sesiones
 
-ADR-005 debe definir proveedor y flujo. Cualquier opción debe cumplir:
+[ADR-005](adr/0005-autenticacion-y-ciclo-de-sesion-movil.md) define Auth0 y el flujo OAuth 2.0/OIDC para el MVP. Su implementación futura debe cumplir:
 
 - identidad derivada de credenciales verificadas, no de IDs arbitrarios;
 - contraseñas, si existen, tratadas por un proveedor o algoritmo apropiado;
@@ -242,7 +242,6 @@ La evidencia de un incidente se preserva con acceso restringido y sin ampliar in
 
 ## Decisiones pendientes de ADR
 
-- autenticación y ciclo de sesión móvil;
 - roles, visibilidad, consentimiento y aislamiento/RLS;
 - clasificación, retención, exportación y eliminación;
 - cifrado adicional a nivel de campo y gestión de claves;
@@ -251,4 +250,3 @@ La evidencia de un incidente se preserva con acceso restringido y sin ampliar in
 - notificaciones y contenido permitido;
 - backups, RPO/RTO y continuidad;
 - requisitos legales y residencia de datos del mercado piloto.
-

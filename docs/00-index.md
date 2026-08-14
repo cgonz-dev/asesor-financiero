@@ -45,9 +45,9 @@ Toda persona o agente que contribuya debe leer primero:
 |---|---|---|
 | Visión y alcance | Propuesta fundacional documentada | Validar con usuarios de la pareja piloto |
 | Dominio financiero | Modelo conceptual documentado; no implementado | Resolver ADR de dinero y ledger antes de Fase 3 |
-| Arquitectura | Propuesta inicial documentada; ADR-001 y ADR-007 aceptados; no implementada | Iniciar Fase 1 únicamente en una tarea expresamente autorizada |
+| Arquitectura | Bootstrap de Fase 1 implementado; ADR-001, ADR-005 y ADR-007 aceptados | Resolver ADR-006 antes de iniciar Fase 2 |
 | IA | Límites, política y catálogo futuro documentados | Resolver ADR-012 y contratos durante Fase 6 |
-| Seguridad y privacidad | Baseline documentado | Resolver identidad/aislamiento antes de Fase 2 y modelar amenazas antes de beta |
+| Seguridad y privacidad | Baseline documentado; ADR-005 aceptado y ADR-006 pendiente | Resolver ADR-006 antes de Fase 2 y modelar amenazas antes de beta |
 | Roadmap | Vigente | Ejecutar de forma secuencial |
 
 ## Convenciones documentales
