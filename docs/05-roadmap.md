@@ -109,7 +109,9 @@ Crear un workspace reproducible que permita desarrollar aplicaciones y paquetes 
 - configuración de entorno sin secretos y modo de desarrollo LAN con CORS de allowlist explícita;
 - validación local de todos los controles anteriores durante el cierre de fase.
 
-No se introdujeron autenticación, hogares, integrantes, base de datos, Prisma, ledger, funcionalidad financiera ni IA. Fase 2 no ha iniciado; ADR-005 está aceptado y ADR-006 es su bloqueador documental restante.
+Al cerrar Fase 1 no se habían introducido autenticación, hogares, integrantes, base de datos,
+Prisma, ledger, funcionalidad financiera ni IA. ADR-005 y ADR-006 quedaron aceptados; el inicio
+posterior de Fase 2 se registra en su propia sección.
 
 ### Alcance
 
@@ -167,6 +169,24 @@ Autenticación real, tablas financieras, ledger, pantallas de producto, IA y des
 
 ## Fase 2. Autenticación, hogares e integrantes
 
+### Estado
+
+**Iniciada el 14 de agosto de 2026; no cerrada.** La Historia 1 implementa exclusivamente
+persistencia base, identidad interna y el núcleo de Household/Membership. Todavía no implementa
+Auth0, login, sesiones, invitaciones, autorización HTTP, recursos financieros ni RLS.
+
+### Evidencia de Historia 1
+
+- PostgreSQL y Prisma 7.9.1 con migración inicial versionada.
+- `User` y `ExternalIdentity`, únicos por `issuer + subject` y sin auto-link por correo.
+- `Household` y `HouseholdMembership` con Owner/Member y estados aprobados.
+- creación transaccional de Household con un Owner Active inicial e índice parcial que impide dos
+  Owner activos;
+- casos de uso internos sin endpoints públicos de identidad u hogares;
+- `health` separado de `readiness`, contrato Zod compartido y OpenAPI actualizado;
+- pruebas unitarias, integración PostgreSQL, E2E y límites arquitectónicos;
+- CI preparada con PostgreSQL 18.4 efímero y aplicación de migraciones versionadas.
+
 ### Objetivo
 
 Establecer identidad, aislamiento por hogar y permisos antes de almacenar finanzas.
@@ -182,6 +202,8 @@ Establecer identidad, aislamiento por hogar y permisos antes de almacenar finanz
 
 ### Historias principales
 
+- Como sistema, quiero mapear una identidad externa ya verificada a un User interno y persistir el
+  núcleo aislado de hogares antes de exponer autenticación real. **Implementada en Historia 1.**
 - Como usuario, quiero crear un hogar individual.
 - Como usuario, quiero invitar a mi pareja con control explícito.
 - Como integrante, quiero que mis recursos personales respeten visibilidad.

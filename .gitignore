@@ -7,6 +7,7 @@ coverage/
 .expo/
 web-build/
 *.tsbuildinfo
+apps/api/src/generated/prisma/
 
 # Local environment files (examples remain versionable)
 .env

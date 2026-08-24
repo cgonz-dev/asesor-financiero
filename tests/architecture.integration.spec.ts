@@ -39,28 +39,17 @@ describe('architecture boundaries', () => {
     );
   });
 
-  it('keeps domain free of source code and framework dependencies during bootstrap', async () => {
+  it('keeps domain independent from frameworks and infrastructure adapters', async () => {
     const packageJson = await readFile(
       resolve(workspaceRoot, 'packages/domain/package.json'),
       'utf8',
     );
-    const sourceEntries = await readdir(resolve(workspaceRoot, 'packages/domain', 'src')).catch(
-      (error: unknown) => {
-        if (
-          error !== null &&
-          typeof error === 'object' &&
-          'code' in error &&
-          error.code === 'ENOENT'
-        ) {
-          return [];
-        }
+    const contents = await sourceText('packages/domain/src');
 
-        throw error;
-      },
+    expect(packageJson).not.toMatch(/@nestjs\/|@prisma\/|["']expo(?:\/|["'])|openai|react-native/i);
+    expect(contents).not.toMatch(
+      /@nestjs\/|@prisma\/|["']expo(?:\/|["'])|openai|react-native|apps[\\/]api/i,
     );
-
-    expect(packageJson).not.toMatch(/@nestjs\/|@prisma\/|expo|openai|react-native/i);
-    expect(sourceEntries).toEqual([]);
   });
 
   it('prevents mobile from importing API internals', async () => {
@@ -69,10 +58,12 @@ describe('architecture boundaries', () => {
       await sourceText('apps/mobile/src'),
     ].join('\n');
 
-    expect(contents).not.toMatch(/apps[\\/]api|@copiloto\/api|\.\.[\\/]\.\.[\\/]api/);
+    expect(contents).not.toMatch(
+      /apps[\\/]api|@copiloto\/api|\.\.[\\/]\.\.[\\/]api|@prisma\/|generated[\\/]prisma|persistence/i,
+    );
   });
 
-  it('keeps the API health shape in the shared contracts package', async () => {
+  it('keeps API response shapes in the shared contracts package', async () => {
     const contents = await sourceText('apps/api/src');
 
     expect(contents).toContain("from '@copiloto/contracts'");

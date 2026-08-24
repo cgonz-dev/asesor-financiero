@@ -8,11 +8,14 @@ export default defineConfig({
       '@copiloto/contracts': fileURLToPath(
         new URL('./packages/contracts/src/index.ts', import.meta.url),
       ),
+      '@copiloto/domain': fileURLToPath(new URL('./packages/domain/src/index.ts', import.meta.url)),
     },
   },
   test: {
     environment: 'node',
+    fileParallelism: false,
     include: ['**/*.spec.ts'],
     exclude: ['**/node_modules/**', '**/dist/**'],
+    setupFiles: ['./tests/setup-environment.ts'],
   },
 });

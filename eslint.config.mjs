@@ -8,6 +8,7 @@ export default [
       '**/coverage/**',
       '**/.expo/**',
       'apps/api/openapi/openapi.json',
+      'apps/api/src/generated/prisma/**',
     ],
   },
   ...baseConfig,

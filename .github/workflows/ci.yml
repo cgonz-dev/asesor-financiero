@@ -19,6 +19,23 @@ jobs:
     name: Validate workspace
     runs-on: ubuntu-latest
     timeout-minutes: 20
+    env:
+      DATABASE_URL: postgresql://copiloto_ci:copiloto_ci_password@127.0.0.1:5432/copiloto_financiero_ci?schema=public
+
+    services:
+      postgres:
+        image: postgres:18.4
+        env:
+          POSTGRES_DB: copiloto_financiero_ci
+          POSTGRES_PASSWORD: copiloto_ci_password
+          POSTGRES_USER: copiloto_ci
+        ports:
+          - 5432:5432
+        options: >-
+          --health-cmd "pg_isready -U copiloto_ci -d copiloto_financiero_ci"
+          --health-interval 5s
+          --health-timeout 5s
+          --health-retries 12
 
     steps:
       - name: Check out repository
@@ -38,6 +55,15 @@ jobs:
 
       - name: Install dependencies
         run: pnpm install --frozen-lockfile
+
+      - name: Generate Prisma Client
+        run: pnpm db:generate
+
+      - name: Apply versioned database migrations
+        run: pnpm db:migrate:deploy
+
+      - name: Check database migration status
+        run: pnpm db:status
 
       - name: Lint
         run: pnpm lint

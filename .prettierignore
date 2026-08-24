@@ -5,6 +5,7 @@ coverage/
 .git/
 pnpm-lock.yaml
 apps/api/openapi/openapi.json
+apps/api/src/generated/prisma/
 AGENTS.md
 README.md
 docs/**/*.md

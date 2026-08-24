@@ -2,12 +2,11 @@
 
 ## Estado
 
-**Fase 1 cerrada.** El bootstrap técnico, health contractual, cliente móvil mínimo, OpenAPI
-reproducible, CI inicial y modo de desarrollo LAN están implementados y validados. La ejecución
-remota de GitHub Actions terminó correctamente en verde. El resto de la tecnología y los límites
-descritos continúan como dirección inicial; las decisiones marcadas como ADR pendiente deben
-resolverse antes de que su fase dependa de ellas. ADR-005 está aceptado; Fase 2 no ha iniciado y
-permanece bloqueada por ADR-006.
+**Fase 1 cerrada y Fase 2 iniciada, no terminada.** El bootstrap técnico, health contractual,
+cliente móvil mínimo, OpenAPI reproducible, CI inicial y modo LAN quedaron validados en Fase 1. La
+Historia 1 de Fase 2 implementa PostgreSQL/Prisma, identidad interna, el núcleo mínimo de Household
+y Membership, y readiness. ADR-005 y ADR-006 están aceptados; Auth0, login, invitaciones,
+autorización HTTP y recursos financieros permanecen fuera de este incremento.
 
 ## Objetivos arquitectónicos
 
@@ -28,8 +27,8 @@ permanece bloqueada por ADR-006.
 | Navegación | Expo Router | Rutas de la app móvil |
 | Backend | NestJS | API modular |
 | Interfaz | REST | OpenAPI como descripción |
-| Datos | PostgreSQL | Sistema transaccional principal |
-| ORM/migraciones | Prisma | Migraciones inmutables una vez aplicadas |
+| Datos | PostgreSQL | Persistencia base implementada en Fase 2; PostgreSQL 18.4 efímero en CI |
+| ORM/migraciones | Prisma 7.9.1 | Prisma Migrate y migraciones inmutables una vez aplicadas |
 | Contratos | Paquete compartido con schemas Zod y tipos inferidos | Zod 4.4.3 y `nestjs-zod` 5.5.0 validados en Fase 1 según [ADR-007](adr/0007-contratos-validacion-openapi-y-cliente.md) |
 | Asistente | OpenAI Responses API | Tool calling y salidas estructuradas |
 | Procesos programados | Redis + BullMQ | Solo al implementar recordatorios/jobs |
@@ -39,7 +38,9 @@ permanece bloqueada por ADR-006.
 
 ## Estructura inicial
 
-La primera historia de Fase 1 creó la estructura base; los directorios futuros permanecen vacíos de lógica funcional hasta su fase:
+Fase 1 creó la estructura base. La Historia 1 de Fase 2 añadió dominio mínimo independiente y
+adaptadores de persistencia dentro de la API; las áreas de fases posteriores siguen sin lógica
+funcional:
 
 ```text
 apps/
@@ -116,9 +117,34 @@ Los límites exactos y dependencias se validarán a medida que avance el roadmap
 
 ## Modelo conceptual de datos
 
-Sin definir aún el esquema Prisma, se prevén:
+La primera migración de Fase 2 implementa únicamente:
 
-- `user`, `household`, `household_member`, roles/permisos;
+- `app_user`: identidad interna estable, con UUID opaco y estado mínimo;
+- `external_identity`: identidad externa separada, única por `issuer + subject`, sin usar correo
+  como clave ni vínculo automático;
+- `household`: límite mínimo de colaboración, sin atributos financieros;
+- `household_membership`: relación estable User↔Household con roles Owner/Member y estados
+  Active/Suspended/Left/Removed.
+
+Los IDs persistentes usan UUID v4 nativo de PostgreSQL. Esta elección mantiene identificadores
+opacos e interoperables sin exponer secuencias. Las tablas PostgreSQL son singulares en
+`snake_case`; Prisma y TypeScript conservan `PascalCase`/`camelCase` mediante mapeo explícito según
+ADR-001.
+
+`external_identity` tiene `UNIQUE (issuer, subject)`. `household_membership` tiene una relación única
+por `(household_id, user_id)`, índices para consultas por Household y por User/membresía activa, y
+foreign keys restrictivas. Un índice parcial SQL limita a un solo Owner Active por Household. Prisma
+todavía requiere una función Preview para declarar ese índice parcial, por lo que la migración
+versionada lo expresa en SQL revisado; el caso de uso crea Household y Owner Active en la misma
+transacción para garantizar exactamente uno al inicio.
+
+Prisma, sus repositorios y las transacciones viven en `apps/api`; `packages/domain` no importa
+NestJS ni Prisma. El desarrollo local usa `prisma dev` porque el motor Docker disponible no estaba
+operativo durante la implementación. CI usa PostgreSQL real efímero y aplica solo migraciones
+versionadas.
+
+Para fases posteriores se prevén, sin que sean tablas definitivas todavía:
+
 - `account`, propiedad y política de visibilidad;
 - `transaction`, `ledger_entry`;
 - `category`, asignaciones y divisiones;
@@ -133,7 +159,8 @@ Sin definir aún el esquema Prisma, se prevén:
 - `idempotency_record`;
 - `audit_event`.
 
-Esta lista identifica conceptos, no tablas definitivas. Normalización, historización, claves, índices y retención necesitan diseño/ADR.
+Esta lista futura identifica conceptos, no tablas definitivas. Normalización, historización, claves,
+índices y retención necesitan diseño/ADR antes de implementarse.
 
 ## Ruta de una escritura financiera
 
@@ -184,7 +211,10 @@ El diseño definitivo de signos, restricciones en base de datos, cuentas técnic
 
 ADR-007 define la estrategia de contratos, OpenAPI, cliente inicial y versionado. La prueba no financiera de Fase 1 seleccionó Zod 4.4.3 y `nestjs-zod` 5.5.0: `createZodDto` deriva en `apps/api` una clase adaptadora sin campos duplicados, mientras `ZodSerializerInterceptor` valida la salida. `packages/contracts` permanece independiente de NestJS y deriva del mismo schema base una variante estricta para servidor y otra compatible para cliente.
 
-`cleanupOpenApiDoc` convierte el schema del adaptador a OpenAPI 3.1. El artefacto se serializa con claves ordenadas y `openapi:check` lo compara sin regenerarlo silenciosamente. El incremento implementa solo `GET /api/v1/health`; readiness se difiere hasta que exista una dependencia externa cuyo estado aporte una señal distinta.
+`cleanupOpenApiDoc` convierte el schema del adaptador a OpenAPI 3.1. El artefacto se serializa con
+claves ordenadas y `openapi:check` lo compara sin regenerarlo silenciosamente. `GET /api/v1/health`
+indica que el proceso vive; `GET /api/v1/readiness` ejecuta una consulta PostgreSQL ligera y responde
+de forma segura sin revelar URL, host, credenciales ni errores internos.
 
 ## Asistente e integración con OpenAI
 
@@ -280,7 +310,7 @@ artefacto OpenAPI versionado permanezca actualizado. No despliega ni publica art
 | ADR-003 | Modelo de ledger, signos, cuentas técnicas e invariantes en DB | Fase 3 | Pendiente |
 | ADR-004 | Estados, vista previa, confirmación y correcciones | Fase 3 | Pendiente |
 | [ADR-005](adr/0005-autenticacion-y-ciclo-de-sesion-movil.md) | Autenticación y ciclo seguro de sesiones móviles | Fase 2 | Aceptado |
-| ADR-006 | Autorización, roles, visibilidad y aislamiento/RLS | Fase 2 | Pendiente |
+| [ADR-006](adr/0006-autorizacion-roles-visibilidad-y-aislamiento.md) | Autorización, roles, visibilidad y aislamiento/RLS | Fase 2 | Aceptado |
 | [ADR-007](adr/0007-contratos-validacion-openapi-y-cliente.md) | Contratos compartidos, validación, OpenAPI, cliente tipado y versionado de API | Fase 1 | Aceptado |
 | ADR-008 | Idempotencia, concurrencia y alcance de claves | Fase 3 | Pendiente |
 | ADR-009 | Fechas efectivas, zona horaria y periodos quincenales/mensuales | Fase 3 | Pendiente |
@@ -296,4 +326,7 @@ artefacto OpenAPI versionado permanezca actualizado. No despliega ni publica art
 | ADR-019 | Observabilidad, auditoría y redacción de datos sensibles | Fase 3; completar antes de beta | Pendiente |
 | ADR-020 | Backups, restauración, RPO/RTO y continuidad | Antes de beta | Pendiente |
 
-ADR-001, ADR-005 y ADR-007 están aceptados. ADR-006 permanece pendiente y bloquea el inicio de Fase 2. Los demás IDs son reservas de trabajo hasta que exista contexto, alternativas y una decisión revisable.
+ADR-001, ADR-005, ADR-006 y ADR-007 están aceptados. El inicio explícito de Fase 2 quedó autorizado
+para la Historia 1 descrita arriba; esa autorización no amplía por sí misma el alcance a las historias
+restantes. Los demás IDs son reservas de trabajo hasta que exista contexto, alternativas y una
+decisión revisable.

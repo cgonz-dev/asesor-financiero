@@ -9,7 +9,7 @@
 
 ## Contexto
 
-Copiloto Financiero necesita demostrar de forma confiable quién realiza cada solicitud antes de crear hogares, integrantes o datos financieros. La Fase 1 está documentada como **cerrada**: ya existen el monorepo, la API NestJS, la aplicación Expo, contratos compartidos, OpenAPI, el cliente REST mínimo, controles de calidad, CI y modo LAN. Este ADR cierra la decisión de autenticación; la Fase 2 no ha iniciado y ADR-006 continúa como decisión bloqueante pendiente.
+Copiloto Financiero necesita demostrar de forma confiable quién realiza cada solicitud antes de crear hogares, integrantes o datos financieros. La Fase 1 está documentada como **cerrada**: ya existen el monorepo, la API NestJS, la aplicación Expo, contratos compartidos, OpenAPI, el cliente REST mínimo, controles de calidad, CI y modo LAN. Este ADR cierra la decisión de autenticación; la Fase 2 no ha iniciado y ADR-006 está aceptado, sin autorizar por sí solo el inicio de Fase 2.
 
 El producto deberá soportar:
 
@@ -25,7 +25,7 @@ El producto deberá soportar:
 - una futura aplicación web;
 - una futura exportación o eliminación de cuenta.
 
-La autenticación solo demuestra identidad. No concede por sí misma acceso a un hogar, membresía, rol, visibilidad ni permiso sobre un recurso. Esas decisiones pertenecen a ADR-006, todavía sin archivo propio y registrado como **Pendiente** en el [índice de decisiones](README.md), y permanecerán pendientes aunque este ADR se acepte.
+La autenticación solo demuestra identidad. No concede por sí misma acceso a un hogar, membresía, rol, visibilidad ni permiso sobre un recurso. Esas decisiones están documentadas en [ADR-006](0006-autorizacion-roles-visibilidad-y-aislamiento.md), cuyo estado es **Aceptado**; su implementación queda para una tarea posterior de Fase 2.
 
 Este ADR decide la estrategia, sus límites y el ciclo conceptual de sesión. No instala SDK, no diseña pantallas, no crea guards, no define tablas, no agrega una base de datos y no inicia la Fase 2.
 
@@ -864,7 +864,7 @@ Nada de este trabajo se ejecuta mediante este ADR documental.
 
 - Fase 1 aparece cerrada y Fase 2 no iniciada.
 - ADR-001, ADR-005 y ADR-007 aparecen Aceptados.
-- ADR-006 permanece Pendiente.
+- ADR-006 está Aceptado y su implementación queda diferida a una tarea posterior.
 - Auth0 es el proveedor vigente; los demás candidatos son alternativas evaluadas.
 - Authorization Code + PKCE `S256` y su callback efímero están permitidos bajo la política aprobada.
 - Correo y contraseña, y Google, son los métodos iniciales; magic links quedan fuera del primer incremento.
@@ -895,8 +895,8 @@ Nada de este trabajo se ejecuta mediante este ADR documental.
 ## Plan de adopción o migración
 
 1. Registrar ADR-005 como **Aceptado** y sincronizar los documentos de estado.
-2. Resolver ADR-006 en una tarea distinta; no iniciarlo como parte de este ADR.
-3. Autorizar Fase 2 únicamente en otra tarea después de aceptar ADR-006 y completar las decisiones de categoría B aplicables.
+2. Mantener ADR-006 como decisión documental separada; no iniciar Fase 2 como parte de este ADR.
+3. Autorizar Fase 2 únicamente en otra tarea posterior y completar las decisiones de categoría B aplicables.
 4. Implementar primero un flujo de autenticación no financiero con usuarios ficticios.
 5. Validar development build, rotación, reutilización, cierre actual/global, recuperación y pérdida de dispositivo antes de hogares.
 6. Decidir durante la historia de sesiones si las capacidades del plan de Auth0 bastan para revocación granular o si hará falta un registro interno futuro.

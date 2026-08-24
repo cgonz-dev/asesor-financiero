@@ -1,0 +1,87 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../src/generated/prisma"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+enum UserStatus {
+  Active  @map("active")
+  Blocked @map("blocked")
+
+  @@map("user_status")
+}
+
+enum HouseholdRole {
+  Owner  @map("owner")
+  Member @map("member")
+
+  @@map("household_role")
+}
+
+enum HouseholdMembershipStatus {
+  Active    @map("active")
+  Suspended @map("suspended")
+  Left      @map("left")
+  Removed   @map("removed")
+
+  @@map("household_membership_status")
+}
+
+model User {
+  id                 String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  status             UserStatus            @default(Active)
+  createdAt          DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+  externalIdentities ExternalIdentity[]
+  memberships        HouseholdMembership[]
+
+  @@map("app_user")
+}
+
+model ExternalIdentity {
+  id            String   @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  issuer        String
+  subject       String
+  provider      String
+  userId        String   @map("user_id") @db.Uuid
+  email         String?
+  emailVerified Boolean? @map("email_verified")
+  createdAt     DateTime @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt     DateTime @updatedAt @map("updated_at") @db.Timestamptz(3)
+  user          User     @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([issuer, subject], map: "uq_external_identity_issuer_subject")
+  @@index([userId], map: "idx_external_identity_user_id")
+  @@map("external_identity")
+}
+
+model Household {
+  id          String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  name        String
+  createdAt   DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+  memberships HouseholdMembership[]
+
+  @@map("household")
+}
+
+model HouseholdMembership {
+  id          String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  householdId String                    @map("household_id") @db.Uuid
+  userId      String                    @map("user_id") @db.Uuid
+  role        HouseholdRole
+  status      HouseholdMembershipStatus @default(Active)
+  createdAt   DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt   DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  household   Household                 @relation(fields: [householdId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  user        User                      @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@unique([householdId, userId], map: "uq_household_membership_household_user")
+  @@index([householdId, status], map: "idx_household_membership_household_status")
+  @@index([userId, status, householdId], map: "idx_household_membership_user_status_household")
+  @@map("household_membership")
+}

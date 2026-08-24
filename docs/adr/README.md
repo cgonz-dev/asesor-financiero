@@ -38,7 +38,7 @@ Un ADR aceptado no se reescribe para ocultar el pasado. Una decisión nueva lo s
 - Referencias: enlazar fase, historias, documentos, contratos y ADR relacionados.
 - Idioma: español; términos de código se documentan según [ADR-001](0001-idioma-y-vocabulario-canonico.md).
 
-Los IDs ADR-001 a ADR-020 usados en la documentación corresponden a archivos `0001` a `0020`. ADR-001, ADR-005 y ADR-007 están aceptados; los demás IDs permanecen reservados hasta que exista contexto, alternativas y una decisión revisable.
+Los IDs ADR-001 a ADR-020 usados en la documentación corresponden a archivos `0001` a `0020`. ADR-001, ADR-005, ADR-006 y ADR-007 están aceptados; la aceptación de ADR-006 no inicia Fase 2; los demás IDs permanecen reservados hasta que exista contexto, alternativas y una decisión revisable.
 
 ## Proceso
 
@@ -63,7 +63,7 @@ Una decisión que afecte saldos, auditoría, seguridad o privacidad requiere con
 | 003 | Ledger, signos, cuentas técnicas e invariantes en base de datos | Antes de Fase 3 | Pendiente |
 | 004 | Estados, vista previa, confirmación y correcciones | Antes de Fase 3 | Pendiente |
 | [005](0005-autenticacion-y-ciclo-de-sesion-movil.md) | Autenticación y ciclo seguro de sesiones móviles | Antes de Fase 2 | Aceptado |
-| 006 | Autorización, roles, visibilidad y aislamiento/RLS | Antes de Fase 2 | Pendiente |
+| [006](0006-autorizacion-roles-visibilidad-y-aislamiento.md) | Autorización, roles, visibilidad y aislamiento/RLS | Antes de Fase 2 | Aceptado |
 | [007](0007-contratos-validacion-openapi-y-cliente.md) | Contratos compartidos, validación, OpenAPI, cliente tipado y versionado de API | Antes de Fase 1 | Aceptado |
 | 008 | Idempotencia, concurrencia y alcance de claves | Antes de Fase 3 | Pendiente |
 | 009 | Fechas efectivas, zona horaria y periodos | Antes de Fase 3 | Pendiente |

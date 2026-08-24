@@ -40,7 +40,7 @@ Para cada lectura y escritura, el servidor debe:
 6. rechazar relaciones con recursos de otro hogar;
 7. registrar acciones sensibles de forma segura.
 
-Los IDs deben ser opacos y la API debe evitar respuestas que permitan enumerar hogares o recursos. Se evaluará defensa en profundidad con restricciones, claves compuestas y Row Level Security; la decisión pertenece a ADR-006.
+Los IDs deben ser opacos y la API debe evitar respuestas que permitan enumerar hogares o recursos. [ADR-006](adr/0006-autorizacion-roles-visibilidad-y-aislamiento.md) acepta defensa en profundidad con restricciones y claves compuestas, y exige evaluar Row Level Security antes de Fase 3.
 
 ## Propiedad, roles y visibilidad
 
@@ -61,7 +61,7 @@ La matriz inicial debe distinguir al menos:
 - recurso del hogar;
 - información agregada que no revele detalles personales no autorizados.
 
-Los nombres finales de roles, permisos de administración, consentimiento de pareja y efectos de abandonar un hogar se resolverán antes de Fase 2. No se usará únicamente ocultamiento en UI como control de acceso.
+Los roles, permisos de administración, consentimiento de pareja y efectos de abandonar un hogar están definidos documentalmente en [ADR-006](adr/0006-autorizacion-roles-visibilidad-y-aislamiento.md); su implementación requiere una autorización posterior de Fase 2. No se usará únicamente ocultamiento en UI como control de acceso.
 
 ## Autenticación y sesiones
 
@@ -242,7 +242,7 @@ La evidencia de un incidente se preserva con acceso restringido y sin ampliar in
 
 ## Decisiones pendientes de ADR
 
-- roles, visibilidad, consentimiento y aislamiento/RLS;
+- autorizar la implementación posterior de [ADR-006](adr/0006-autorizacion-roles-visibilidad-y-aislamiento.md) sobre roles, visibilidad, consentimiento y aislamiento/RLS;
 - clasificación, retención, exportación y eliminación;
 - cifrado adicional a nivel de campo y gestión de claves;
 - auditoría, redacción, acceso de soporte y observabilidad;

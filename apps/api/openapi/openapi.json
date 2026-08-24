@@ -26,12 +26,35 @@
           "version"
         ],
         "type": "object"
+      },
+      "ReadinessResponseDto": {
+        "additionalProperties": false,
+        "properties": {
+          "service": {
+            "const": "copiloto-financiero-api",
+            "description": "Stable service identifier.",
+            "type": "string"
+          },
+          "status": {
+            "description": "Whether the API can serve requests that depend on its infrastructure.",
+            "enum": [
+              "ready",
+              "notReady"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "status",
+          "service"
+        ],
+        "type": "object"
       }
     }
   },
   "info": {
     "contact": {},
-    "description": "API bootstrap contract. It contains no financial operations.",
+    "description": "API contracts implemented so far. It contains no financial operations.",
     "title": "Copiloto Financiero API",
     "version": "0.1.0"
   },
@@ -61,6 +84,46 @@
         "summary": "Report API process health",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/api/v1/readiness": {
+      "get": {
+        "operationId": "ReadinessController_getReadiness",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "service": "copiloto-financiero-api",
+                  "status": "ready"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponseDto"
+                }
+              }
+            },
+            "description": "The API can use its required infrastructure."
+          },
+          "503": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "service": "copiloto-financiero-api",
+                  "status": "notReady"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ReadinessResponseDto"
+                }
+              }
+            },
+            "description": "The API cannot currently use its required infrastructure."
+          }
+        },
+        "summary": "Report whether the API can use its required infrastructure",
+        "tags": [
+          "readiness"
         ]
       }
     }

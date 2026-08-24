@@ -6,8 +6,9 @@ import { AppModule } from './app.module';
 import { allowedCorsOriginsFromEnvironment } from './cors';
 import { createOpenApiDocument } from './openapi/create-openapi-document';
 
-interface CreateApplicationOptions {
+export interface CreateApplicationOptions {
   corsOrigins?: string[];
+  databaseUrl?: string;
   docs?: boolean;
   logger?: NestApplicationOptions['logger'];
 }
@@ -15,9 +16,14 @@ interface CreateApplicationOptions {
 export async function createApplication(
   options: CreateApplicationOptions = {},
 ): Promise<INestApplication> {
-  const app = await NestFactory.create(AppModule, {
-    logger: options.logger ?? false,
-  });
+  const app = await NestFactory.create(
+    AppModule.register(
+      options.databaseUrl === undefined ? {} : { databaseUrl: options.databaseUrl },
+    ),
+    {
+      logger: options.logger ?? false,
+    },
+  );
 
   app.setGlobalPrefix('api/v1');
   app.enableCors({

@@ -6,6 +6,7 @@ import { afterAll, beforeAll, describe, expect, it } from 'vitest';
 import { createApplication } from '../src/create-application';
 
 const LOCAL_WEB_ORIGIN = 'http://localhost:8081';
+const UNAVAILABLE_DATABASE_URL = 'postgresql://health_test:health_test@127.0.0.1:1/unavailable';
 
 describe('GET /api/v1/health', () => {
   let app: INestApplication;
@@ -13,6 +14,7 @@ describe('GET /api/v1/health', () => {
   beforeAll(async () => {
     app = await createApplication({
       corsOrigins: [LOCAL_WEB_ORIGIN],
+      databaseUrl: UNAVAILABLE_DATABASE_URL,
       docs: false,
     });
     await app.init();
@@ -22,7 +24,7 @@ describe('GET /api/v1/health', () => {
     await app.close();
   });
 
-  it('returns 200 and satisfies the strict shared contract', async () => {
+  it('returns 200 without depending on PostgreSQL and satisfies the strict shared contract', async () => {
     const response = await request(app.getHttpServer()).get('/api/v1/health').expect(200);
 
     expect(HealthResponseServerSchema.parse(response.body)).toEqual(response.body);

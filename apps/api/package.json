@@ -3,20 +3,25 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "nest build",
-    "dev": "nest start --watch",
+    "build": "prisma generate && nest build",
+    "dev": "prisma generate && nest start --watch",
     "start": "node dist/main.js",
-    "typecheck": "tsc -p tsconfig.json --noEmit",
+    "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit",
     "openapi:generate": "pnpm build && node dist/cli/openapi.js generate",
     "openapi:check": "pnpm build && node dist/cli/openapi.js check"
   },
   "dependencies": {
     "@copiloto/contracts": "workspace:*",
+    "@copiloto/domain": "workspace:*",
     "@nestjs/common": "11.1.28",
     "@nestjs/core": "11.1.28",
     "@nestjs/platform-express": "11.1.28",
     "@nestjs/swagger": "11.4.6",
+    "@prisma/adapter-pg": "7.9.1",
+    "@prisma/client": "7.9.1",
+    "dotenv": "17.4.2",
     "nestjs-zod": "5.5.0",
+    "pg": "8.23.0",
     "reflect-metadata": "0.2.2",
     "rxjs": "7.8.2"
   },
@@ -25,7 +30,9 @@
     "@nestjs/cli": "11.0.24",
     "@nestjs/testing": "11.1.28",
     "@types/express": "5.0.6",
+    "@types/pg": "8.21.0",
     "@types/supertest": "7.2.1",
+    "prisma": "7.9.1",
     "supertest": "7.2.2"
   }
 }

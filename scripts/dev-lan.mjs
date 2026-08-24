@@ -199,6 +199,7 @@ async function startLanDevelopment() {
 
   await Promise.all([assertPortIsAvailable(API_PORT), assertPortIsAvailable(WEB_PORT)]);
   await runToCompletion(pnpmCommand, ['--filter', '@copiloto/contracts', 'build']);
+  await runToCompletion(pnpmCommand, ['--filter', '@copiloto/domain', 'build']);
 
   const api = run(pnpmCommand, ['--filter', '@copiloto/api', 'dev'], {
     ...process.env,

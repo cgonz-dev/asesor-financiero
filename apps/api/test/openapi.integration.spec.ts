@@ -9,7 +9,10 @@ describe('OpenAPI generation', () => {
   let app: INestApplication;
 
   beforeAll(async () => {
-    app = await createApplication({ docs: false });
+    app = await createApplication({
+      databaseUrl: 'postgresql://openapi_test:openapi_test@127.0.0.1:1/unavailable',
+      docs: false,
+    });
     await app.init();
   });
 
@@ -32,6 +35,24 @@ describe('OpenAPI generation', () => {
         version: { minLength: 1, type: 'string' },
       },
       required: ['status', 'service', 'version'],
+      type: 'object',
+    });
+  });
+
+  it('documents both readiness outcomes with the strict shared response schema', () => {
+    const document = createOpenApiDocument(app);
+    const readinessOperation = document.paths['/api/v1/readiness']?.get;
+    const readinessSchema = document.components?.schemas?.ReadinessResponseDto;
+
+    expect(readinessOperation?.responses['200']).toBeDefined();
+    expect(readinessOperation?.responses['503']).toBeDefined();
+    expect(readinessSchema).toMatchObject({
+      additionalProperties: false,
+      properties: {
+        service: { const: 'copiloto-financiero-api', type: 'string' },
+        status: { enum: ['ready', 'notReady'], type: 'string' },
+      },
+      required: ['status', 'service'],
       type: 'object',
     });
   });
