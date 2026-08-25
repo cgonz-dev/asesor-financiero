@@ -65,7 +65,10 @@ Los roles, permisos de administración, consentimiento de pareja y efectos de ab
 
 ## Autenticación y sesiones
 
-[ADR-005](adr/0005-autenticacion-y-ciclo-de-sesion-movil.md) define Auth0 y el flujo OAuth 2.0/OIDC para el MVP. Su implementación futura debe cumplir:
+[ADR-005](adr/0005-autenticacion-y-ciclo-de-sesion-movil.md) define Auth0 y el flujo OAuth 2.0/OIDC
+para el MVP. Historia 2 implementa localmente el límite de token, sesión móvil y `/me`; su cierre
+requiere todavía validar las políticas del tenant y un development build real. El diseño vigente y
+sus incrementos deben cumplir:
 
 - identidad derivada de credenciales verificadas, no de IDs arbitrarios;
 - contraseñas, si existen, tratadas por un proveedor o algoritmo apropiado;
@@ -76,6 +79,14 @@ Los roles, permisos de administración, consentimiento de pareja y efectos de ab
 - cierre de sesión y revocación ante pérdida de dispositivo;
 - verificación adicional para acciones de alto riesgo cuando el modelo de amenazas lo justifique;
 - expiración, revocación y auditoría de invitaciones al hogar.
+
+El guard implementado acepta solo access tokens RS256 para issuer/audience configurados, usa JWKS
+con caché y timeout, y deriva la identidad externa de `issuer + subject`; no acepta ID tokens,
+correo, `userId` ni `householdId`. El móvil usa el Credentials Manager oficial sobre
+Keychain/Keystore y mantiene el access token en memoria cuando es utilizable. No existe bypass de
+desarrollo, almacenamiento en AsyncStorage/localStorage ni autorización basada en roles u
+Organizations de Auth0. Invitaciones, revocación global/granular y autorización Household siguen
+fuera del incremento actual.
 
 ## Autorización del servidor
 

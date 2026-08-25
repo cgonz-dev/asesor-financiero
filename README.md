@@ -13,21 +13,28 @@ estructuradas y explicaciones útiles, sin convertir a la IA en fuente de verdad
   CI inicial y modo LAN completados y verificados.
 - La ejecución real de GitHub Actions terminó correctamente en verde.
 - **Fase 2 iniciada, pero no terminada.** La Historia 1 implementa persistencia base, identidad
-  interna y el núcleo de `Household`/`HouseholdMembership`.
+  interna y el núcleo de `Household`/`HouseholdMembership`. La implementación local de Historia 2
+  incorpora autenticación Auth0, pero su cierre requiere configurar un tenant de desarrollo y
+  validar un development build en dispositivo real.
 - Existe código no financiero para API, móvil, contratos, dominio mínimo y persistencia PostgreSQL.
-- No existen login/Auth0, invitaciones, ledger, operaciones monetarias ni integración de IA.
+- No existen invitaciones, endpoints Household, ledger, operaciones monetarias ni integración de
+  IA.
 - ADR-001, ADR-005, ADR-006 y ADR-007 permanecen aceptados.
 
 ## Arquitectura implementada en este incremento
 
 - monorepo TypeScript con pnpm workspaces;
-- API NestJS con `GET /api/v1/health` y documentación local en `/api/docs`;
+- API NestJS con health/readiness públicos, `GET /api/v1/me` autenticado y documentación local en
+  `/api/docs`;
 - PostgreSQL con Prisma 7.9.1, migración versionada y adaptadores dentro de `apps/api`;
 - `User`, `ExternalIdentity`, `Household` y `HouseholdMembership`, sin modelos financieros;
 - casos de uso internos para resolver identidad verificada, crear un hogar con Owner inicial y
   listar hogares activos; no son endpoints públicos;
 - `GET /api/v1/readiness`, que comprueba PostgreSQL sin revelar configuración o errores internos;
-- aplicación React Native con Expo y Expo Router, exportable para web;
+- Auth0 como proveedor OAuth 2.0/OIDC: el móvil usa Authorization Code + PKCE y la API verifica
+  access tokens RS256 por issuer, audience y JWKS antes de resolver `issuer + subject`;
+- aplicación React Native con Expo Router, coordinador de sesión y Credentials Manager nativo para
+  Keychain/Keystore; Expo Web no persiste ni simula la sesión móvil;
 - `packages/contracts` independiente de frameworks, con Zod como fuente canónica;
 - cliente REST móvil con transporte inyectable, timeout, cancelación y validación de respuesta;
 - configuraciones compartidas de TypeScript, ESLint y Prettier;
@@ -51,7 +58,10 @@ La arquitectura completa prevista se mantiene en
 | Zod | 4.4.3 |
 | `nestjs-zod` | 5.5.0 |
 | Expo / Expo Router | 57.0.9 |
+| Expo Dev Client | 57.0.11 |
 | React Native / React | 0.86.2 / 19.2.3 |
+| Auth0 React Native SDK | 5.11.0 |
+| JOSE | 6.2.10 |
 | Prisma | 7.9.1 |
 | PostgreSQL en CI | 18.4 |
 
@@ -65,10 +75,10 @@ usa una variante estricta; el cliente usa una variante compatible derivada del m
 
 ```text
 apps/
-  api/                 # NestJS, persistencia Prisma, health/readiness y OpenAPI
-  mobile/              # Expo Router y cliente REST
+  api/                 # NestJS, autenticación, Prisma, health/readiness, /me y OpenAPI
+  mobile/              # Expo Router, sesión Auth0 y cliente REST
 packages/
-  contracts/           # schemas Zod y tipos inferidos
+  contracts/           # schemas Zod y tipos inferidos, sin acoplamiento a Auth0
   domain/              # reglas mínimas de identidad y Household, sin frameworks
   config/              # esqueleto de configuración no sensible
   eslint-config/
@@ -145,15 +155,19 @@ Espera a que aparezca `Nest application successfully started`.
 pnpm --filter @copiloto/mobile web
 ```
 
-Abre `http://localhost:8081`. La pantalla debe indicar que la API está conectada. Verifica también
-`http://localhost:3000/api/v1/readiness`; debe responder `ready`. La documentación interactiva de la
-API queda en `http://localhost:3000/api/docs`. Para detener todo, presiona `Ctrl+C` en cada terminal.
+Abre `http://localhost:8081`. La pantalla web explica que el login real requiere un development
+build; no guarda tokens en el navegador. Verifica `http://localhost:3000/api/v1/health` y
+`http://localhost:3000/api/v1/readiness`; readiness debe responder `ready`. La documentación
+interactiva queda en `http://localhost:3000/api/docs`. Para detener todo, presiona `Ctrl+C` en cada
+terminal.
 
 ## Instalación y ejecución
 
 Requisitos: Node.js 24 LTS y pnpm 11.9.0. El `packageManager` de la raíz permite que Corepack
-seleccione la versión exacta. Antes de iniciar la API, inicia PostgreSQL, configura `apps/api/.env`,
-genera Prisma Client y aplica las migraciones como se explica arriba.
+seleccione la versión exacta. Antes de iniciar la API, inicia PostgreSQL, configura `apps/api/.env`
+con `DATABASE_URL`, `AUTH0_ISSUER` y `AUTH0_AUDIENCE`, genera Prisma Client y aplica las migraciones
+como se explica arriba. Si ambas variables Auth0 están ausentes, solo health/readiness arrancan y
+`/me` falla cerrado; una configuración parcial o inválida impide iniciar. No existe bypass local.
 
 ```bash
 pnpm install
@@ -178,15 +192,108 @@ En otra terminal:
 pnpm dev:mobile
 ```
 
-Expo usa `http://localhost:3000` como valor local predeterminado. Para configurar otro host, copia
-`.env.example` como `apps/mobile/.env.local` y establece `EXPO_PUBLIC_API_URL` sin una diagonal
-final:
+Expo usa `http://localhost:3000` como valor local predeterminado. Para configurar otro host, usa
+`.env.example` como referencia y crea `apps/mobile/.env.local` únicamente con las variables
+`EXPO_PUBLIC_*` necesarias; establece `EXPO_PUBLIC_API_URL` sin una diagonal final:
 
 - web: `http://localhost:3000`;
 - emulador Android: `http://10.0.2.2:3000`;
 - dispositivo físico: `http://<IP-LAN-DE-LA-COMPUTADORA>:3000`.
 
 No se debe guardar una IP personal, token o secreto en archivos versionados.
+
+## Auth0 de desarrollo y development build
+
+La autenticación móvil real no funciona en Expo Go ni en Expo Web porque usa módulos nativos. El
+SDK abre Universal Login en el navegador seguro del sistema con Authorization Code + PKCE S256 y
+administra/verifica `state` y `nonce`; no usa WebView embebido. El Credentials Manager protege la
+credencial renovable mediante iOS Keychain o Android Keystore. La API solo acepta un access token
+dirigido a su audience. Nunca uses el ID token, un client secret o un `userId` del cliente como
+autenticación.
+
+### Configuración manual del Dashboard
+
+Usa un tenant exclusivo de desarrollo, sin personas ni datos reales:
+
+1. Crea una **API** con un identifier propio —será `AUTH0_AUDIENCE` y
+   `EXPO_PUBLIC_AUTH0_AUDIENCE`—, algoritmo RS256 y **Allow Offline Access** habilitado. El
+   identifier debe ser distinto del Client ID.
+2. Crea una **Native Application** pública. Mantén `Token Endpoint Authentication Method: None` y
+   habilita solo Authorization Code y Refresh Token; no habilites Implicit ni Password grant.
+3. Para el bundle/package de desarrollo `com.copilotofinanciero.dev` y el esquema
+   `copilotofinanciero`, registra exactamente estas Allowed Callback URLs:
+
+   ```text
+   copilotofinanciero://<TU-DOMINIO-AUTH0>/ios/com.copilotofinanciero.dev/callback
+   copilotofinanciero://<TU-DOMINIO-AUTH0>/android/com.copilotofinanciero.dev/callback
+   ```
+
+4. Registra las mismas dos URLs como Allowed Logout URLs. Allowed Web Origins no es necesario para
+   este cliente nativo; no agregues `*`.
+5. Activa Refresh Token Rotation, detección de reutilización y expiración absoluta/inactividad. Los
+   valores concretos deben revisarse humanamente conforme a ADR-005 antes de cerrar Historia 2; el
+   código no inventa ni sobreescribe duraciones del tenant. Conserva una ventana de overlap mínima
+   y documentada.
+6. Habilita una Database Connection y Google únicamente para esta Native Application. Configura
+   Google con credenciales de desarrollo propias; no pegues secretos en el repositorio. Magic links
+   y Apple permanecen deshabilitados en esta historia.
+
+En `apps/mobile/.env.local` guarda únicamente valores públicos:
+
+```dotenv
+EXPO_PUBLIC_API_URL=http://<HOST-DE-DESARROLLO>:3000
+EXPO_PUBLIC_AUTH0_DOMAIN=<TU-DOMINIO-AUTH0-SIN-HTTPS>
+EXPO_PUBLIC_AUTH0_CLIENT_ID=<CLIENT-ID-DE-LA-NATIVE-APPLICATION>
+EXPO_PUBLIC_AUTH0_AUDIENCE=<IDENTIFIER-DE-LA-API>
+```
+
+En `apps/api/.env`, además de las URLs locales de PostgreSQL:
+
+```dotenv
+AUTH0_ISSUER=https://<TU-DOMINIO-AUTH0>/
+AUTH0_AUDIENCE=<EL-MISMO-IDENTIFIER-DE-LA-API>
+```
+
+No hay client secret en móvil ni se necesita uno para validar la API. Ambos archivos locales están
+ignorados por Git; `.env.example` conserva solo ejemplos genéricos.
+
+### Crear y ejecutar el development build
+
+Define las variables antes de generar el proyecto nativo, conecta un dispositivo de desarrollo y
+ejecuta desde la raíz:
+
+```bash
+pnpm install --frozen-lockfile
+pnpm --filter @copiloto/mobile android:dev
+```
+
+En Windows, el segundo comando requiere Android SDK/JDK y un dispositivo autorizado por ADB. En
+macOS puede usarse `pnpm --filter @copiloto/mobile ios:dev`. Las carpetas nativas generadas están
+ignoradas porque la configuración canónica vive en `app.config.ts`; esto no publica la app ni crea
+un build de producción. Después de instalar el development build una vez, inicia Metro con:
+
+```bash
+pnpm dev:mobile:native
+```
+
+Inicia además PostgreSQL y `pnpm dev:api`. En un teléfono físico usa la IPv4 LAN de la computadora
+en `EXPO_PUBLIC_API_URL`; `localhost` apuntaría al propio teléfono. Primero valida health/readiness,
+después inicia sesión y pulsa **Consultar mi perfil**. El perfil solo devuelve el UUID opaco y el
+estado del `User` interno.
+
+La restauración muestra una pantalla neutral, renueva una sola vez para solicitudes concurrentes y
+solo declara sesión activa después de que `/me` responde. Un segundo `401` limpia la sesión; logout
+aborta solicitudes, limpia memoria y Keychain/Keystore inmediatamente e intenta revocar el refresh
+token y cerrar la sesión de navegador sin conservarlo para un reintento offline.
+
+Referencias oficiales verificadas el 24 de agosto de 2026: [Auth0 con
+Expo](https://auth0.com/docs/quickstart/native/react-native-expo), [SDK React Native de
+Auth0](https://github.com/auth0/react-native-auth0), [validación de access
+tokens](https://auth0.com/docs/secure/tokens/access-tokens/validate-access-tokens), [refresh token
+rotation](https://auth0.com/docs/secure/tokens/refresh-tokens/refresh-token-rotation), [revocación de
+refresh tokens](https://auth0.com/docs/secure/tokens/refresh-tokens/revoke-refresh-tokens),
+[development builds de Expo](https://docs.expo.dev/develop/development-builds/introduction/) y
+[opciones de JWKS remoto de JOSE](https://github.com/panva/jose/blob/main/docs/jwks/remote/interfaces/RemoteJWKSetOptions.md).
 
 ## Probar desde un celular en la red local
 
@@ -248,7 +355,8 @@ El workflow [Copiloto Financiero CI](.github/workflows/ci.yml) se ejecuta en cad
 en pull requests dirigidos a `main` y de forma manual. Levanta PostgreSQL 18.4 efímero con
 credenciales ficticias de CI, genera Prisma Client, aplica únicamente migraciones versionadas y
 comprueba su estado antes de ejecutar los controles. También falla si OpenAPI generado difiere del
-artefacto versionado. No despliega ni publica paquetes.
+artefacto versionado. Las pruebas criptográficas usan issuer, JWKS, claves y tokens sintéticos
+locales; CI no necesita un tenant ni secretos Auth0. No despliega ni publica paquetes.
 
 Para reproducirlo localmente, ejecuta el bloque de **Controles** desde la raíz del monorepo. La
 ejecución remota se consulta en la pestaña [Actions del repositorio](https://github.com/cgonz-dev/asesor-financiero/actions).
@@ -279,11 +387,12 @@ Antes de modificar el proyecto:
 
 - El análisis de cambios incompatibles de OpenAPI aún no existe; CI solo verifica que el artefacto
   generado permanezca actualizado.
-- No se validó un binario nativo en Android/iOS; sí se validó la exportación web de Expo.
+- El plugin/config nativo de Auth0 se validó con valores ficticios, pero falta crear el tenant de
+  desarrollo y probar login, renovación y logout en un development build sobre dispositivo real.
 - `health` no comprueba PostgreSQL por diseño; usa `readiness` para esa señal.
 - La estrategia local `prisma dev` es únicamente para desarrollo; producción aún no está diseñada.
 
 ## Próxima historia recomendada
 
-Integrar el adaptador Auth0 que verifique tokens y entregue una identidad externa ya verificada a
-`ResolveOrCreateUserFromExternalIdentity`, sin iniciar todavía invitaciones ni funcionalidad financiera.
+Después de cerrar la validación manual de Historia 2, conectar el `User` autenticado con la creación
+y consulta de su hogar individual, aplicando ADR-006 y sin implementar todavía invitaciones.

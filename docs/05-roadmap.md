@@ -171,9 +171,11 @@ Autenticación real, tablas financieras, ledger, pantallas de producto, IA y des
 
 ### Estado
 
-**Iniciada el 14 de agosto de 2026; no cerrada.** La Historia 1 implementa exclusivamente
-persistencia base, identidad interna y el núcleo de Household/Membership. Todavía no implementa
-Auth0, login, sesiones, invitaciones, autorización HTTP, recursos financieros ni RLS.
+**Iniciada el 14 de agosto de 2026; no cerrada.** La Historia 1 implementa persistencia base,
+identidad interna y el núcleo de Household/Membership. Historia 2 tiene implementación y pruebas
+locales de Auth0, sesión móvil y autenticación API, pero permanece abierta hasta configurar un
+tenant de desarrollo y validar el development build en dispositivo. Invitaciones, autorización
+Household HTTP, recursos financieros y RLS no se han iniciado.
 
 ### Evidencia de Historia 1
 
@@ -186,6 +188,26 @@ Auth0, login, sesiones, invitaciones, autorización HTTP, recursos financieros n
 - `health` separado de `readiness`, contrato Zod compartido y OpenAPI actualizado;
 - pruebas unitarias, integración PostgreSQL, E2E y límites arquitectónicos;
 - CI preparada con PostgreSQL 18.4 efímero y aplicación de migraciones versionadas.
+
+### Evidencia local de Historia 2 — cierre pendiente
+
+- Native Application pública preparada con `react-native-auth0`, Universal Login, Authorization
+  Code + PKCE y audience propia; no existe client secret móvil ni flujo implícito/password grant;
+- coordinador móvil con estados de restauración/autenticación, token en memoria, Credentials
+  Manager sobre Keychain/Keystore, renovación single-flight, un reintento máximo tras `401`,
+  cancelación y logout local inmediato con revocación remota best effort;
+- guard NestJS que valida Bearer, RS256, issuer/audience exactos, expiración/activación, `sub` y JWKS
+  con caché, timeout, cooldown y rotación controlada;
+- `issuer + subject` verificados resuelven el `User` interno; email, `userId`, `householdId`, roles y
+  Organizations de Auth0 no autentican ni autorizan;
+- `GET /api/v1/me` devuelve únicamente UUID opaco y estado; health/readiness continúan públicos;
+- schemas Zod compartidos, errores 401 estables, Bearer scheme y OpenAPI 3.1 regenerado;
+- pruebas unitarias, integración y E2E con claves/JWKS sintéticos, sin tenant ni secretos en CI.
+
+Historia 2 **no se marca completada** porque faltan dos evidencias humanas obligatorias: seleccionar
+y registrar las duraciones iniciales de access/refresh/sesión conforme a ADR-005, y probar login por
+Database/Google, renovación, restauración y logout en un development build con un tenant Auth0 de
+desarrollo. Esta espera no inicia Historia 3.
 
 ### Objetivo
 
@@ -204,6 +226,9 @@ Establecer identidad, aislamiento por hogar y permisos antes de almacenar finanz
 
 - Como sistema, quiero mapear una identidad externa ya verificada a un User interno y persistir el
   núcleo aislado de hogares antes de exponer autenticación real. **Implementada en Historia 1.**
+- Como usuario móvil, quiero iniciar/cerrar/restaurar una sesión Auth0 y consultar mi identidad
+  interna mediante una API que valide el access token. **Implementada localmente en Historia 2;
+  cierre pendiente de validación nativa con tenant de desarrollo.**
 - Como usuario, quiero crear un hogar individual.
 - Como usuario, quiero invitar a mi pareja con control explícito.
 - Como integrante, quiero que mis recursos personales respeten visibilidad.

@@ -5,8 +5,10 @@
 **Fase 1 cerrada y Fase 2 iniciada, no terminada.** El bootstrap técnico, health contractual,
 cliente móvil mínimo, OpenAPI reproducible, CI inicial y modo LAN quedaron validados en Fase 1. La
 Historia 1 de Fase 2 implementa PostgreSQL/Prisma, identidad interna, el núcleo mínimo de Household
-y Membership, y readiness. ADR-005 y ADR-006 están aceptados; Auth0, login, invitaciones,
-autorización HTTP y recursos financieros permanecen fuera de este incremento.
+y Membership, y readiness. Historia 2 implementa localmente el límite Auth0, sesión móvil y `/me`;
+su cierre requiere validar un tenant de desarrollo y un development build real. ADR-005 y ADR-006
+están aceptados; invitaciones, autorización Household y recursos financieros permanecen fuera de
+este incremento.
 
 ## Objetivos arquitectónicos
 
@@ -32,15 +34,15 @@ autorización HTTP y recursos financieros permanecen fuera de este incremento.
 | Contratos | Paquete compartido con schemas Zod y tipos inferidos | Zod 4.4.3 y `nestjs-zod` 5.5.0 validados en Fase 1 según [ADR-007](adr/0007-contratos-validacion-openapi-y-cliente.md) |
 | Asistente | OpenAI Responses API | Tool calling y salidas estructuradas |
 | Procesos programados | Redis + BullMQ | Solo al implementar recordatorios/jobs |
-| Autenticación | Auth0 mediante OAuth 2.0/OIDC | Decidida en [ADR-005](adr/0005-autenticacion-y-ciclo-de-sesion-movil.md); todavía no implementada |
+| Autenticación | Auth0 mediante OAuth 2.0/OIDC | Límite API y sesión móvil implementados conforme a [ADR-005](adr/0005-autenticacion-y-ciclo-de-sesion-movil.md); validación nativa con tenant pendiente |
 | Panel web | Fuera del MVP | Previsto posteriormente |
 | Bancos/pagos | Fuera del MVP | Sin conexiones ni ejecución automática |
 
 ## Estructura inicial
 
 Fase 1 creó la estructura base. La Historia 1 de Fase 2 añadió dominio mínimo independiente y
-adaptadores de persistencia dentro de la API; las áreas de fases posteriores siguen sin lógica
-funcional:
+adaptadores de persistencia dentro de la API. Historia 2 añade autenticación sin introducir lógica
+Household HTTP ni financiera; las áreas de fases posteriores siguen sin lógica funcional:
 
 ```text
 apps/
@@ -216,6 +218,39 @@ claves ordenadas y `openapi:check` lo compara sin regenerarlo silenciosamente. `
 indica que el proceso vive; `GET /api/v1/readiness` ejecuta una consulta PostgreSQL ligera y responde
 de forma segura sin revelar URL, host, credenciales ni errores internos.
 
+## Autenticación implementada en Historia 2
+
+El cliente móvil es una Native Application pública. `react-native-auth0` abre Universal Login en el
+navegador seguro con Authorization Code + PKCE S256, `state` y `nonce`, solicita un access token
+para la audience propia y delega la persistencia necesaria al Credentials Manager respaldado por
+Keychain/Keystore. Un coordinador conserva el access token utilizable en memoria, restaura la
+sesión antes de mostrar contenido privado, ejecuta una sola renovación concurrente, permite un
+único reintento tras `401` y
+aborta solicitudes al cerrar sesión. Expo Go y Expo Web no son superficies de autenticación móvil.
+
+El cliente REST depende de un puerto `TokenProvider`, no de Auth0. `packages/contracts` contiene el
+schema Zod de `/me` y errores públicos, pero no SDK, claims ni tipos del proveedor.
+
+En NestJS un guard central:
+
+1. exige un Bearer JWT compacto con tamaño acotado;
+2. verifica RS256, `kid`, issuer y audience exactos, `exp`, `nbf` y `sub` mediante JOSE; el clock
+   skew inicial es de cinco segundos, suficiente para relojes de servidor sincronizados sin ampliar
+   de forma material la ventana de aceptación;
+3. obtiene JWKS solo del issuer configurado, con timeout, caché, cooldown y refresh controlado ante
+   rotación;
+4. falla cerrado ante firma, algoritmo, `kid`, issuer, audience o claims inválidos;
+5. transforma únicamente la identidad verificada `issuer + subject` y la entrega a
+   `ResolveOrCreateUserFromExternalIdentity`;
+6. crea un contexto interno con `User` activo y responde `GET /api/v1/me` solo con UUID opaco y
+   estado.
+
+Health y readiness permanecen públicos. `/me` no recibe `userId`, email ni `householdId`, no expone
+tokens o claims y todavía no resuelve membresías. Las pruebas usan claves, issuer y JWKS sintéticos
+locales; CI no depende de Auth0 real ni de secretos. La implementación no se considera cerrada en
+dispositivo hasta configurar las políticas concretas del tenant y validar login, rotación,
+restauración y logout en un development build.
+
 ## Asistente e integración con OpenAI
 
 El orquestador del backend:
@@ -265,7 +300,10 @@ La arquitectura completa de sincronización queda pendiente de ADR y fuera del M
 - Se consideran controles en aplicación y, previa evaluación, Row Level Security.
 - Secretos se obtienen de un gestor/entorno seguro, no del repositorio.
 - TLS en tránsito.
-- Tokens móviles en almacenamiento seguro del sistema.
+- Las credenciales móviles persistidas usan el Credentials Manager de Auth0 sobre
+  Keychain/Keystore; no se usa AsyncStorage, localStorage ni SQLite para tokens.
+- La API usa una allowlist estática de issuer/audience y no confía roles u Organizations de Auth0
+  para autorización Household.
 - Logs, trazas y prompts se redactan.
 - Auditoría de accesos y escrituras sensibles.
 - Backups, restauración, exportación y eliminación se diseñan antes de beta.
@@ -326,7 +364,7 @@ artefacto OpenAPI versionado permanezca actualizado. No despliega ni publica art
 | ADR-019 | Observabilidad, auditoría y redacción de datos sensibles | Fase 3; completar antes de beta | Pendiente |
 | ADR-020 | Backups, restauración, RPO/RTO y continuidad | Antes de beta | Pendiente |
 
-ADR-001, ADR-005, ADR-006 y ADR-007 están aceptados. El inicio explícito de Fase 2 quedó autorizado
-para la Historia 1 descrita arriba; esa autorización no amplía por sí misma el alcance a las historias
-restantes. Los demás IDs son reservas de trabajo hasta que exista contexto, alternativas y una
-decisión revisable.
+ADR-001, ADR-005, ADR-006 y ADR-007 están aceptados. El inicio explícito de Fase 2 cubre Historia 1 y
+la implementación local de Historia 2 descritas arriba; no amplía por sí mismo el alcance a
+invitaciones, autorización Household ni historias financieras. Los demás IDs son reservas de
+trabajo hasta que exista contexto, alternativas y una decisión revisable.

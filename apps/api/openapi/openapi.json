@@ -1,6 +1,28 @@
 {
   "components": {
     "schemas": {
+      "AuthenticationErrorDto": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "enum": [
+              "AUTHENTICATION_REQUIRED",
+              "AUTHENTICATION_INVALID"
+            ],
+            "type": "string"
+          },
+          "message": {
+            "description": "Safe, localizable public message.",
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "type": "object"
+      },
       "HealthResponseDto": {
         "additionalProperties": false,
         "properties": {
@@ -27,6 +49,30 @@
         ],
         "type": "object"
       },
+      "MeResponseDto": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "Opaque internal User identifier.",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "status": {
+            "description": "Current internal User status.",
+            "enum": [
+              "active",
+              "blocked"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "status"
+        ],
+        "type": "object"
+      },
       "ReadinessResponseDto": {
         "additionalProperties": false,
         "properties": {
@@ -49,6 +95,14 @@
           "service"
         ],
         "type": "object"
+      }
+    },
+    "securitySchemes": {
+      "auth0": {
+        "bearerFormat": "JWT",
+        "description": "Auth0 access token issued for the Copiloto Financiero API audience.",
+        "scheme": "bearer",
+        "type": "http"
       }
     }
   },
@@ -84,6 +138,51 @@
         "summary": "Report API process health",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/api/v1/me": {
+      "get": {
+        "operationId": "MeController_getMe",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "11111111-1111-4111-8111-111111111111",
+                  "status": "active"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/MeResponseDto"
+                }
+              }
+            },
+            "description": "The access token maps to an active internal User."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "AUTHENTICATION_REQUIRED",
+                  "message": "Se requiere una sesión válida."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationErrorDto"
+                }
+              }
+            },
+            "description": "A valid access token for this API is required."
+          }
+        },
+        "security": [
+          {
+            "auth0": []
+          }
+        ],
+        "summary": "Return the minimal authenticated internal User profile",
+        "tags": [
+          "identity"
         ]
       }
     },

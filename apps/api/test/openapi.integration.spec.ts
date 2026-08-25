@@ -57,6 +57,43 @@ describe('OpenAPI generation', () => {
     });
   });
 
+  it('documents the authenticated minimal User profile, safe 401 and Auth0 Bearer scheme', () => {
+    const document = createOpenApiDocument(app);
+    const meOperation = document.paths['/api/v1/me']?.get;
+    const meSchema = document.components?.schemas?.MeResponseDto;
+    const authenticationErrorSchema = document.components?.schemas?.AuthenticationErrorDto;
+
+    expect(meOperation?.security).toEqual([{ auth0: [] }]);
+    expect(meOperation?.responses['200']).toBeDefined();
+    expect(meOperation?.responses['401']).toBeDefined();
+    expect(document.components?.securitySchemes?.auth0).toMatchObject({
+      bearerFormat: 'JWT',
+      scheme: 'bearer',
+      type: 'http',
+    });
+    expect(meSchema).toMatchObject({
+      additionalProperties: false,
+      properties: {
+        id: { format: 'uuid', type: 'string' },
+        status: { enum: ['active', 'blocked'], type: 'string' },
+      },
+      required: ['id', 'status'],
+      type: 'object',
+    });
+    expect(authenticationErrorSchema).toMatchObject({
+      additionalProperties: false,
+      properties: {
+        code: {
+          enum: ['AUTHENTICATION_REQUIRED', 'AUTHENTICATION_INVALID'],
+          type: 'string',
+        },
+        message: { minLength: 1, type: 'string' },
+      },
+      required: ['code', 'message'],
+      type: 'object',
+    });
+  });
+
   it('is deterministic across repeated generation', () => {
     const first = canonicalJson(createOpenApiDocument(app));
     const second = canonicalJson(createOpenApiDocument(app));

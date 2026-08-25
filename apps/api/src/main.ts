@@ -1,9 +1,15 @@
+import 'dotenv/config';
 import 'reflect-metadata';
 
+import { authConfigurationFromEnvironment } from './auth/config/auth-configuration';
 import { createApplication } from './create-application';
 
 async function bootstrap(): Promise<void> {
-  const app = await createApplication({ logger: ['error', 'warn', 'log'] });
+  const authConfiguration = authConfigurationFromEnvironment();
+  const app = await createApplication({
+    ...(authConfiguration === undefined ? {} : { authConfiguration }),
+    logger: ['error', 'warn', 'log'],
+  });
   app.enableShutdownHooks();
   const port = Number.parseInt(process.env.PORT ?? '3000', 10);
   const host = process.env.API_HOST?.trim();

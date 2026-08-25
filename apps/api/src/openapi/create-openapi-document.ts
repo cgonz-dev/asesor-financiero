@@ -7,6 +7,15 @@ export function createOpenApiDocument(app: INestApplication): OpenAPIObject {
     .setTitle('Copiloto Financiero API')
     .setDescription('API contracts implemented so far. It contains no financial operations.')
     .setVersion('0.1.0')
+    .addBearerAuth(
+      {
+        type: 'http',
+        scheme: 'bearer',
+        bearerFormat: 'JWT',
+        description: 'Auth0 access token issued for the Copiloto Financiero API audience.',
+      },
+      'auth0',
+    )
     .build();
 
   const document = SwaggerModule.createDocument(app, config);

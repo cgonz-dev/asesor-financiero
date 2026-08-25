@@ -8,6 +8,8 @@ coverage/
 web-build/
 *.tsbuildinfo
 apps/api/src/generated/prisma/
+apps/mobile/android/
+apps/mobile/ios/
 
 # Local environment files (examples remain versionable)
 .env

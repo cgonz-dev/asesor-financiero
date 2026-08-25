@@ -1,97 +1,122 @@
-import { useEffect, useState } from 'react';
-import { Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
+import { useEffect, useMemo, useState } from 'react';
+import { ActivityIndicator, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
 import { StatusBar } from 'expo-status-bar';
 
-import { getApiBaseUrl } from '../src/config';
-import { HealthApiClient, HealthApiClientError } from '../src/health-api-client';
+import type { SessionSnapshot } from '../src/auth/auth0-session-coordinator';
+import { createMobileSessionRuntime } from '../src/auth/session-runtime';
 
-type ConnectionState = 'connected' | 'error' | 'loading';
-
-const healthClient = new HealthApiClient({
-  baseUrl: getApiBaseUrl(),
-});
-
-export default function BootstrapScreen() {
-  const [connectionState, setConnectionState] = useState<ConnectionState>('loading');
-  const [detail, setDetail] = useState('Consultando la API…');
+export default function AuthenticationScreen() {
+  const runtime = useMemo(() => createMobileSessionRuntime(), []);
+  const [snapshot, setSnapshot] = useState<SessionSnapshot>(() =>
+    runtime.coordinator === undefined
+      ? {
+          message: runtime.configurationError ?? 'La autenticación no está disponible.',
+          status: 'error',
+        }
+      : runtime.coordinator.currentSnapshot(),
+  );
 
   useEffect(() => {
-    const controller = new AbortController();
+    if (runtime.coordinator === undefined || runtime.client === undefined) {
+      return;
+    }
 
-    void healthClient
-      .getHealth({ signal: controller.signal })
-      .then((health) => {
-        setConnectionState('connected');
-        setDetail(`API conectada · versión ${health.version}`);
-      })
-      .catch((error: unknown) => {
-        if (error instanceof HealthApiClientError && error.code === 'cancelled') {
-          return;
-        }
+    const coordinator = runtime.coordinator;
+    const client = runtime.client;
+    const unsubscribe = coordinator.subscribe(setSnapshot);
+    void coordinator.restore(() => client.getMe());
 
-        setConnectionState('error');
-        setDetail(
-          error instanceof HealthApiClientError
-            ? error.message
-            : 'Ocurrió un error inesperado al consultar la API.',
-        );
-      });
+    return unsubscribe;
+  }, [runtime]);
 
-    return () => controller.abort();
-  }, []);
-
-  const refreshHealth = async () => {
-    setConnectionState('loading');
-    setDetail('Consultando la API…');
-
-    try {
-      const health = await healthClient.getHealth();
-      setConnectionState('connected');
-      setDetail(`API conectada · versión ${health.version}`);
-    } catch (error) {
-      setConnectionState('error');
-      setDetail(
-        error instanceof HealthApiClientError
-          ? error.message
-          : 'Ocurrió un error inesperado al consultar la API.',
-      );
+  const login = async () => {
+    if (runtime.coordinator !== undefined && runtime.client !== undefined) {
+      await runtime.coordinator.login(() => runtime.client!.getMe());
     }
   };
+
+  const logout = async () => {
+    await runtime.coordinator?.logout();
+  };
+
+  const refreshProfile = async () => {
+    if (runtime.coordinator !== undefined && runtime.client !== undefined) {
+      await runtime.coordinator.refreshProfile(() => runtime.client!.getMe());
+    }
+  };
+
+  const isBusy = snapshot.status === 'authenticating' || snapshot.status === 'restoring';
 
   return (
     <SafeAreaView style={styles.safeArea}>
       <StatusBar style="dark" />
       <View style={styles.container}>
-        <Text style={styles.eyebrow}>FASE 1 · BOOTSTRAP</Text>
+        <Text style={styles.eyebrow}>FASE 2 · IDENTIDAD</Text>
         <Text style={styles.title}>Copiloto Financiero</Text>
         <Text style={styles.description}>
-          La base técnica está iniciando. Todavía no existe funcionalidad financiera.
+          Acceso seguro para continuar con la configuración inicial. No hay funciones financieras en
+          esta pantalla.
         </Text>
 
-        <View
-          accessibilityLiveRegion="polite"
-          style={[styles.statusCard, connectionState === 'error' && styles.statusCardError]}
-        >
-          <Text style={styles.statusLabel}>Estado de conexión</Text>
-          <Text style={styles.statusValue}>{detail}</Text>
+        <View accessibilityLiveRegion="polite" style={styles.statusCard}>
+          <Text style={styles.statusLabel}>Estado de sesión</Text>
+          {isBusy ? <ActivityIndicator color="#1d4f3a" /> : null}
+          <Text style={styles.statusValue}>
+            {snapshot.status === 'restoring' && 'Restaurando sesión…'}
+            {snapshot.status === 'authenticating' && 'Abriendo Auth0…'}
+            {snapshot.status === 'unauthenticated' && 'Inicia sesión para continuar.'}
+            {snapshot.status === 'authenticated' && 'Sesión activa.'}
+            {snapshot.status === 'error' && (snapshot.message ?? 'No pudimos validar la sesión.')}
+          </Text>
+          {snapshot.profile === undefined ? null : (
+            <Text selectable style={styles.identifier}>
+              Usuario: {snapshot.profile.id}
+            </Text>
+          )}
         </View>
 
-        <Pressable
-          accessibilityRole="button"
-          disabled={connectionState === 'loading'}
-          onPress={() => void refreshHealth()}
-          style={({ pressed }) => [
-            styles.button,
-            pressed && styles.buttonPressed,
-            connectionState === 'loading' && styles.buttonDisabled,
-          ]}
-        >
-          <Text style={styles.buttonText}>
-            {connectionState === 'loading' ? 'Consultando…' : 'Volver a consultar'}
-          </Text>
-        </Pressable>
+        {snapshot.status === 'authenticated' ? (
+          <>
+            <SessionButton label="Consultar mi perfil" onPress={refreshProfile} />
+            <SessionButton label="Cerrar sesión" onPress={logout} secondary />
+          </>
+        ) : (
+          <SessionButton
+            disabled={runtime.coordinator === undefined || isBusy}
+            label={snapshot.status === 'authenticating' ? 'Iniciando…' : 'Iniciar sesión'}
+            onPress={login}
+          />
+        )}
       </View>
     </SafeAreaView>
+  );
+}
+
+function SessionButton({
+  disabled = false,
+  label,
+  onPress,
+  secondary = false,
+}: {
+  disabled?: boolean;
+  label: string;
+  onPress: () => Promise<void>;
+  secondary?: boolean;
+}) {
+  return (
+    <Pressable
+      accessibilityRole="button"
+      disabled={disabled}
+      onPress={() => void onPress()}
+      style={({ pressed }) => [
+        styles.button,
+        secondary && styles.buttonSecondary,
+        pressed && styles.buttonPressed,
+        disabled && styles.buttonDisabled,
+      ]}
+    >
+      <Text style={[styles.buttonText, secondary && styles.buttonTextSecondary]}>{label}</Text>
+    </Pressable>
   );
 }
 
@@ -103,7 +128,7 @@ const styles = StyleSheet.create({
   container: {
     alignItems: 'stretch',
     flex: 1,
-    gap: 24,
+    gap: 20,
     justifyContent: 'center',
     marginHorizontal: 'auto',
     maxWidth: 560,
@@ -131,12 +156,8 @@ const styles = StyleSheet.create({
     borderColor: '#b8c8ae',
     borderRadius: 16,
     borderWidth: 1,
-    gap: 8,
+    gap: 10,
     padding: 20,
-  },
-  statusCardError: {
-    backgroundColor: '#f8e5df',
-    borderColor: '#d9ada0',
   },
   statusLabel: {
     color: '#526056',
@@ -149,12 +170,21 @@ const styles = StyleSheet.create({
     fontSize: 17,
     fontWeight: '600',
   },
+  identifier: {
+    color: '#526056',
+    fontSize: 13,
+  },
   button: {
     alignItems: 'center',
     backgroundColor: '#1d4f3a',
+    borderColor: '#1d4f3a',
     borderRadius: 12,
+    borderWidth: 1,
     paddingHorizontal: 20,
     paddingVertical: 15,
+  },
+  buttonSecondary: {
+    backgroundColor: 'transparent',
   },
   buttonDisabled: {
     opacity: 0.55,
@@ -166,5 +196,8 @@ const styles = StyleSheet.create({
     color: '#ffffff',
     fontSize: 16,
     fontWeight: '700',
+  },
+  buttonTextSecondary: {
+    color: '#1d4f3a',
   },
 });

@@ -13,6 +13,7 @@
     "dev:api": "pnpm --filter @copiloto/contracts build && pnpm --filter @copiloto/domain build && pnpm --filter @copiloto/api dev",
     "dev:lan": "node scripts/dev-lan.mjs",
     "dev:mobile": "pnpm --filter @copiloto/contracts build && pnpm --filter @copiloto/mobile dev",
+    "dev:mobile:native": "pnpm --filter @copiloto/contracts build && pnpm --filter @copiloto/mobile dev:client",
     "lint": "eslint .",
     "format": "prettier --write .",
     "format:check": "prettier --check .",

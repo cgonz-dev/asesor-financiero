@@ -1,4 +1,19 @@
 export {
+  AUTHENTICATION_INVALID_ERROR_EXAMPLE,
+  AUTHENTICATION_REQUIRED_ERROR_EXAMPLE,
+  AuthenticationErrorCodeSchema,
+  ME_RESPONSE_EXAMPLE,
+  MeResponseClientSchema,
+  MeResponseSchema,
+  MeResponseServerSchema,
+  PublicAuthenticationErrorSchema,
+} from './authentication';
+export type {
+  AuthenticationErrorCode,
+  MeResponse,
+  PublicAuthenticationError,
+} from './authentication';
+export {
   HEALTH_RESPONSE_EXAMPLE,
   HealthResponseClientSchema,
   HealthResponseSchema,
