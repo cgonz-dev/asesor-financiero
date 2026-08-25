@@ -10,6 +10,9 @@
     "start": "expo start",
     "android": "expo start --android",
     "android:dev": "expo run:android --device",
+    "android:build:cloud": "eas build --platform android --profile development",
+    "eas:init": "eas init",
+    "eas:login": "eas login",
     "ios": "expo start --ios",
     "ios:dev": "expo run:ios --device",
     "web": "expo start --web",
@@ -34,6 +37,7 @@
   },
   "devDependencies": {
     "@copiloto/typescript-config": "workspace:*",
-    "@types/react": "~19.2.2"
+    "@types/react": "~19.2.2",
+    "eas-cli": "22.0.0"
   }
 }

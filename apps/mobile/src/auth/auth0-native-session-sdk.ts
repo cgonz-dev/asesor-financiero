@@ -11,6 +11,7 @@ import { type AuthSessionSdk, type SessionCredentials, SessionSdkError } from '.
 
 const AUTH0_SCOPE = 'openid profile email offline_access';
 const MINIMUM_ACCESS_TOKEN_TTL_SECONDS = 30;
+const SAFE_AUTH0_ERROR_CODE = /^[A-Za-z0-9._-]{1,80}$/;
 
 function publicCredentials(credentials: Credentials): SessionCredentials {
   return {
@@ -47,6 +48,14 @@ function sessionSdkError(error: unknown): SessionSdkError {
   }
 
   if (error instanceof WebAuthError) {
+    if (__DEV__) {
+      console.warn('Auth0 web authentication failed.', {
+        code: SAFE_AUTH0_ERROR_CODE.test(error.code) ? error.code : 'redacted',
+        status: error.status,
+        type: error.type,
+      });
+    }
+
     if (error.type === WebAuthErrorCodes.USER_CANCELLED) {
       return new SessionSdkError('cancelled', { cause: error });
     }

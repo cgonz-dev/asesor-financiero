@@ -122,6 +122,32 @@ describe('Auth0SessionCoordinator', () => {
     });
   });
 
+  it('reports visible progress and success while refreshing the internal profile', async () => {
+    const coordinator = new Auth0SessionCoordinator(fakeSdk());
+    await coordinator.login(async () => PROFILE);
+    let releaseProfile: ((profile: MeResponse) => void) | undefined;
+    const pendingProfile = new Promise<MeResponse>((resolve) => {
+      releaseProfile = resolve;
+    });
+
+    const refreshing = coordinator.refreshProfile(() => pendingProfile);
+
+    expect(coordinator.currentSnapshot()).toEqual({
+      profile: PROFILE,
+      profileRefreshStatus: 'refreshing',
+      status: 'authenticated',
+    });
+
+    releaseProfile?.(PROFILE);
+    await refreshing;
+
+    expect(coordinator.currentSnapshot()).toEqual({
+      profile: PROFILE,
+      profileRefreshStatus: 'succeeded',
+      status: 'authenticated',
+    });
+  });
+
   it('clears memory, cancels requests and remains logged out when remote revocation is offline', async () => {
     const logout = vi.fn(async () => ({ remoteRevocationConfirmed: false }));
     const coordinator = new Auth0SessionCoordinator(fakeSdk({ logout }));

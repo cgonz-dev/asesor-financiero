@@ -12,10 +12,9 @@ estructuradas y explicaciones útiles, sin convertir a la IA en fuente de verdad
 - **Fase 1 cerrada:** bootstrap reproducible, health contractual, OpenAPI, cliente móvil mínimo,
   CI inicial y modo LAN completados y verificados.
 - La ejecución real de GitHub Actions terminó correctamente en verde.
-- **Fase 2 iniciada, pero no terminada.** La Historia 1 implementa persistencia base, identidad
-  interna y el núcleo de `Household`/`HouseholdMembership`. La implementación local de Historia 2
-  incorpora autenticación Auth0, pero su cierre requiere configurar un tenant de desarrollo y
-  validar un development build en dispositivo real.
+- **Fase 2 iniciada, pero no terminada.** Las Historias 1 y 2 están completadas: existen la
+  persistencia e identidad base, el núcleo de `Household`/`HouseholdMembership` y la autenticación
+  Auth0 validada en un development build Android contra un tenant exclusivo de desarrollo.
 - Existe código no financiero para API, móvil, contratos, dominio mínimo y persistencia PostgreSQL.
 - No existen invitaciones, endpoints Household, ledger, operaciones monetarias ni integración de
   IA.
@@ -53,7 +52,7 @@ La arquitectura completa prevista se mantiene en
 |---|---|
 | Node.js | 24.x LTS |
 | pnpm | 11.9.0 |
-| TypeScript | 6.0.3 |
+| TypeScript | 5.9.3 |
 | NestJS | 11.1.28 |
 | Zod | 4.4.3 |
 | `nestjs-zod` | 5.5.0 |
@@ -230,10 +229,11 @@ Usa un tenant exclusivo de desarrollo, sin personas ni datos reales:
 
 4. Registra las mismas dos URLs como Allowed Logout URLs. Allowed Web Origins no es necesario para
    este cliente nativo; no agregues `*`.
-5. Activa Refresh Token Rotation, detección de reutilización y expiración absoluta/inactividad. Los
-   valores concretos deben revisarse humanamente conforme a ADR-005 antes de cerrar Historia 2; el
-   código no inventa ni sobreescribe duraciones del tenant. Conserva una ventana de overlap mínima
-   y documentada.
+5. Activa Refresh Token Rotation, detección de reutilización y expiración absoluta/inactividad. La
+   política inicial validada para desarrollo/MVP usa access tokens de 10 minutos, inactividad del
+   refresh token de 7 días, máximo absoluto de 30 días y overlap de rotación de 3 segundos. Es una
+   política inicial revisable, no una garantía legal o definitiva; el código no duplica ni
+   sobreescribe estas duraciones del tenant.
 6. Habilita una Database Connection y Google únicamente para esta Native Application. Configura
    Google con credenciales de desarrollo propias; no pegues secretos en el repositorio. Magic links
    y Apple permanecen deshabilitados en esta historia.
@@ -258,6 +258,42 @@ No hay client secret en móvil ni se necesita uno para validar la API. Ambos arc
 ignorados por Git; `.env.example` conserva solo ejemplos genéricos.
 
 ### Crear y ejecutar el development build
+
+#### Android sin Android Studio: APK interno con EAS
+
+La vía más simple en Windows usa EAS Build en la nube. El perfil `development` de
+`apps/mobile/eas.json` genera exclusivamente un development client Android en formato APK con
+distribución interna: no crea un AAB, no publica en Play Store y no define un perfil de producción.
+EAS CLI está fijado como dependencia local; no requiere una instalación global.
+
+Después de crear una cuenta de Expo, inicia y vincula el proyecto desde la raíz:
+
+```bash
+pnpm --filter @copiloto/mobile eas:login
+pnpm --filter @copiloto/mobile eas:init
+```
+
+Registra en el ambiente remoto `development` solo los tres identificadores públicos de Auth0. Usa
+los valores del tenant de desarrollo, nunca un Client Secret:
+
+```bash
+pnpm --filter @copiloto/mobile exec eas env:set --name EXPO_PUBLIC_AUTH0_DOMAIN --value <DOMINIO-AUTH0-SIN-HTTPS> --environment development --visibility plaintext
+pnpm --filter @copiloto/mobile exec eas env:set --name EXPO_PUBLIC_AUTH0_CLIENT_ID --value <CLIENT-ID-PUBLICO> --environment development --visibility plaintext
+pnpm --filter @copiloto/mobile exec eas env:set --name EXPO_PUBLIC_AUTH0_AUDIENCE --value <IDENTIFIER-DE-LA-API> --environment development --visibility plaintext
+```
+
+Crea el APK interno:
+
+```bash
+pnpm --filter @copiloto/mobile android:build:cloud
+```
+
+Al terminar, abre en el Android el enlace o QR privado de instalación que muestra EAS. Permite la
+instalación desde esa fuente únicamente para este APK de desarrollo. La URL LAN de la API sigue
+viviendo solo en `apps/mobile/.env.local`; no se guarda la IP personal en EAS ni en Git. Con el APK
+instalado, inicia API y Metro con `pnpm dev:api` y `pnpm dev:mobile:native` en terminales separadas.
+
+#### Compilación local con Android SDK
 
 Define las variables antes de generar el proyecto nativo, conecta un dispositivo de desarrollo y
 ejecuta desde la raíz:
@@ -285,6 +321,11 @@ La restauración muestra una pantalla neutral, renueva una sola vez para solicit
 solo declara sesión activa después de que `/me` responde. Un segundo `401` limpia la sesión; logout
 aborta solicitudes, limpia memoria y Keychain/Keystore inmediatamente e intenta revocar el refresh
 token y cerrar la sesión de navegador sin conservarlo para un reintento offline.
+
+El cierre de Historia 2 validó en un Android real los accesos por Google y Database Connection, la
+consulta de `/me`, la restauración después de cerrar completamente la app, el logout, la reapertura
+sin restaurar la sesión cerrada y un nuevo login. La revocación remota del proveedor continúa siendo
+best effort; el cierre local y la limpieza de credenciales no dependen de ella.
 
 Referencias oficiales verificadas el 24 de agosto de 2026: [Auth0 con
 Expo](https://auth0.com/docs/quickstart/native/react-native-expo), [SDK React Native de
@@ -387,12 +428,10 @@ Antes de modificar el proyecto:
 
 - El análisis de cambios incompatibles de OpenAPI aún no existe; CI solo verifica que el artefacto
   generado permanezca actualizado.
-- El plugin/config nativo de Auth0 se validó con valores ficticios, pero falta crear el tenant de
-  desarrollo y probar login, renovación y logout en un development build sobre dispositivo real.
 - `health` no comprueba PostgreSQL por diseño; usa `readiness` para esa señal.
 - La estrategia local `prisma dev` es únicamente para desarrollo; producción aún no está diseñada.
 
 ## Próxima historia recomendada
 
-Después de cerrar la validación manual de Historia 2, conectar el `User` autenticado con la creación
-y consulta de su hogar individual, aplicando ADR-006 y sin implementar todavía invitaciones.
+Historia 3: conectar el `User` autenticado con la creación y consulta de su hogar individual,
+aplicando ADR-006 y sin implementar todavía invitaciones.

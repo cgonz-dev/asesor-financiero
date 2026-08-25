@@ -66,9 +66,10 @@ Los roles, permisos de administración, consentimiento de pareja y efectos de ab
 ## Autenticación y sesiones
 
 [ADR-005](adr/0005-autenticacion-y-ciclo-de-sesion-movil.md) define Auth0 y el flujo OAuth 2.0/OIDC
-para el MVP. Historia 2 implementa localmente el límite de token, sesión móvil y `/me`; su cierre
-requiere todavía validar las políticas del tenant y un development build real. El diseño vigente y
-sus incrementos deben cumplir:
+para el MVP. Historia 2 implementó y validó el límite de token, sesión móvil y `/me` en un
+development build Android. La política inicial de desarrollo/MVP usa access tokens de 10 minutos,
+inactividad de refresh de 7 días, máximo de 30 días, rotación y overlap de 3 segundos; es revisable
+y no una garantía definitiva. El diseño vigente y sus incrementos deben cumplir:
 
 - identidad derivada de credenciales verificadas, no de IDs arbitrarios;
 - contraseñas, si existen, tratadas por un proveedor o algoritmo apropiado;

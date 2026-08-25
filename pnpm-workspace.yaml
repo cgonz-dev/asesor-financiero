@@ -6,5 +6,6 @@ allowBuilds:
   '@prisma/engines': true
   '@scarf/scarf': false
   browser-tabs-lock: false
+  dtrace-provider: false
   esbuild: true
   prisma: true

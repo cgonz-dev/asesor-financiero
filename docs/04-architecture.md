@@ -5,10 +5,10 @@
 **Fase 1 cerrada y Fase 2 iniciada, no terminada.** El bootstrap técnico, health contractual,
 cliente móvil mínimo, OpenAPI reproducible, CI inicial y modo LAN quedaron validados en Fase 1. La
 Historia 1 de Fase 2 implementa PostgreSQL/Prisma, identidad interna, el núcleo mínimo de Household
-y Membership, y readiness. Historia 2 implementa localmente el límite Auth0, sesión móvil y `/me`;
-su cierre requiere validar un tenant de desarrollo y un development build real. ADR-005 y ADR-006
-están aceptados; invitaciones, autorización Household y recursos financieros permanecen fuera de
-este incremento.
+y Membership, y readiness. Historia 2 implementa y valida el límite Auth0, sesión móvil y `/me` en
+un development build Android contra un tenant exclusivo de desarrollo. ADR-005 y ADR-006 están
+aceptados; invitaciones, autorización Household y recursos financieros permanecen fuera de este
+incremento.
 
 ## Objetivos arquitectónicos
 
@@ -247,9 +247,10 @@ En NestJS un guard central:
 
 Health y readiness permanecen públicos. `/me` no recibe `userId`, email ni `householdId`, no expone
 tokens o claims y todavía no resuelve membresías. Las pruebas usan claves, issuer y JWKS sintéticos
-locales; CI no depende de Auth0 real ni de secretos. La implementación no se considera cerrada en
-dispositivo hasta configurar las políticas concretas del tenant y validar login, rotación,
-restauración y logout en un development build.
+locales; CI no depende de Auth0 real ni de secretos. En desarrollo se validaron Google y Database
+Connection, restauración, `/me`, logout y relogin en un development build Android. La política
+inicial del tenant usa access tokens de 10 minutos, inactividad de refresh de 7 días, máximo de 30
+días, rotación y overlap de 3 segundos; permanece revisable y no se duplica en código.
 
 ## Asistente e integración con OpenAI
 
@@ -364,7 +365,7 @@ artefacto OpenAPI versionado permanezca actualizado. No despliega ni publica art
 | ADR-019 | Observabilidad, auditoría y redacción de datos sensibles | Fase 3; completar antes de beta | Pendiente |
 | ADR-020 | Backups, restauración, RPO/RTO y continuidad | Antes de beta | Pendiente |
 
-ADR-001, ADR-005, ADR-006 y ADR-007 están aceptados. El inicio explícito de Fase 2 cubre Historia 1 y
-la implementación local de Historia 2 descritas arriba; no amplía por sí mismo el alcance a
-invitaciones, autorización Household ni historias financieras. Los demás IDs son reservas de
-trabajo hasta que exista contexto, alternativas y una decisión revisable.
+ADR-001, ADR-005, ADR-006 y ADR-007 están aceptados. Las Historias 1 y 2 de Fase 2 están completadas;
+esto no amplía por sí mismo el alcance a invitaciones, autorización Household ni historias
+financieras. Los demás IDs son reservas de trabajo hasta que exista contexto, alternativas y una
+decisión revisable.

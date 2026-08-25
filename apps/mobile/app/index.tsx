@@ -46,6 +46,7 @@ export default function AuthenticationScreen() {
   };
 
   const isBusy = snapshot.status === 'authenticating' || snapshot.status === 'restoring';
+  const isRefreshingProfile = snapshot.profileRefreshStatus === 'refreshing';
 
   return (
     <SafeAreaView style={styles.safeArea}>
@@ -73,11 +74,18 @@ export default function AuthenticationScreen() {
               Usuario: {snapshot.profile.id}
             </Text>
           )}
+          {snapshot.profileRefreshStatus === 'succeeded' ? (
+            <Text style={styles.profileFeedback}>Perfil consultado correctamente.</Text>
+          ) : null}
         </View>
 
         {snapshot.status === 'authenticated' ? (
           <>
-            <SessionButton label="Consultar mi perfil" onPress={refreshProfile} />
+            <SessionButton
+              disabled={isRefreshingProfile}
+              label={isRefreshingProfile ? 'Consultando…' : 'Consultar mi perfil'}
+              onPress={refreshProfile}
+            />
             <SessionButton label="Cerrar sesión" onPress={logout} secondary />
           </>
         ) : (
@@ -173,6 +181,11 @@ const styles = StyleSheet.create({
   identifier: {
     color: '#526056',
     fontSize: 13,
+  },
+  profileFeedback: {
+    color: '#1d4f3a',
+    fontSize: 14,
+    fontWeight: '600',
   },
   button: {
     alignItems: 'center',

@@ -12,6 +12,7 @@ export type SessionStatus =
 export interface SessionSnapshot {
   message?: string;
   profile?: MeResponse;
+  profileRefreshStatus?: 'refreshing' | 'succeeded';
   status: SessionStatus;
 }
 
@@ -111,15 +112,25 @@ export class Auth0SessionCoordinator implements TokenProvider {
   }
 
   async refreshProfile(loadProfile: ProfileLoader): Promise<void> {
-    if (this.snapshot.status !== 'authenticated') {
+    if (this.snapshot.status !== 'authenticated' || this.snapshot.profile === undefined) {
       return;
     }
 
     const generation = this.generation;
+    const currentProfile = this.snapshot.profile;
+    this.transition({
+      profile: currentProfile,
+      profileRefreshStatus: 'refreshing',
+      status: 'authenticated',
+    });
 
     try {
       const profile = await loadProfile();
-      this.finishIfCurrent(generation, { profile, status: 'authenticated' });
+      this.finishIfCurrent(generation, {
+        profile,
+        profileRefreshStatus: 'succeeded',
+        status: 'authenticated',
+      });
     } catch (error: unknown) {
       await this.handleSessionFailure(error, generation);
     }

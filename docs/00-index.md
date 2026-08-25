@@ -45,9 +45,9 @@ Toda persona o agente que contribuya debe leer primero:
 |---|---|---|
 | Visión y alcance | Propuesta fundacional documentada | Validar con usuarios de la pareja piloto |
 | Dominio financiero | Modelo conceptual documentado; no implementado | Resolver ADR de dinero y ledger antes de Fase 3 |
-| Arquitectura | Fase 1 cerrada; Fase 2 iniciada con persistencia e implementación local de autenticación; ADR-001, ADR-005, ADR-006 y ADR-007 aceptados | Validar Historia 2 en tenant/development build antes de conectar Household |
+| Arquitectura | Fase 1 cerrada; Fase 2 abierta con Historias 1 y 2 completadas; ADR-001, ADR-005, ADR-006 y ADR-007 aceptados | Continuar con Historia 3 sin iniciar invitaciones ni funcionalidad financiera |
 | IA | Límites, política y catálogo futuro documentados | Resolver ADR-012 y contratos durante Fase 6 |
-| Seguridad y privacidad | Baseline documentado; límite Auth0 y sesión implementados localmente conforme a ADR-005; validación nativa pendiente | Validar políticas del tenant/development build y modelar amenazas antes de beta |
+| Seguridad y privacidad | Baseline documentado; límite Auth0 y sesión validados en development build conforme a ADR-005 | Implementar autorización Household por historias y modelar amenazas antes de beta |
 | Roadmap | Vigente | Ejecutar de forma secuencial |
 
 ## Convenciones documentales

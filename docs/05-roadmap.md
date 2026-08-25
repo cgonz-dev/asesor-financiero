@@ -171,11 +171,10 @@ Autenticación real, tablas financieras, ledger, pantallas de producto, IA y des
 
 ### Estado
 
-**Iniciada el 14 de agosto de 2026; no cerrada.** La Historia 1 implementa persistencia base,
-identidad interna y el núcleo de Household/Membership. Historia 2 tiene implementación y pruebas
-locales de Auth0, sesión móvil y autenticación API, pero permanece abierta hasta configurar un
-tenant de desarrollo y validar el development build en dispositivo. Invitaciones, autorización
-Household HTTP, recursos financieros y RLS no se han iniciado.
+**Iniciada el 14 de agosto de 2026; no cerrada.** Las Historias 1 y 2 están completadas. Existen la
+persistencia e identidad base, el núcleo de Household/Membership y la autenticación Auth0 validada
+en Android. Invitaciones, autorización Household HTTP, recursos financieros y RLS no se han
+iniciado. El siguiente trabajo secuencial es Historia 3.
 
 ### Evidencia de Historia 1
 
@@ -189,7 +188,7 @@ Household HTTP, recursos financieros y RLS no se han iniciado.
 - pruebas unitarias, integración PostgreSQL, E2E y límites arquitectónicos;
 - CI preparada con PostgreSQL 18.4 efímero y aplicación de migraciones versionadas.
 
-### Evidencia local de Historia 2 — cierre pendiente
+### Evidencia de Historia 2 — completada el 25 de agosto de 2026
 
 - Native Application pública preparada con `react-native-auth0`, Universal Login, Authorization
   Code + PKCE y audience propia; no existe client secret móvil ni flujo implícito/password grant;
@@ -202,12 +201,15 @@ Household HTTP, recursos financieros y RLS no se han iniciado.
   Organizations de Auth0 no autentican ni autorizan;
 - `GET /api/v1/me` devuelve únicamente UUID opaco y estado; health/readiness continúan públicos;
 - schemas Zod compartidos, errores 401 estables, Bearer scheme y OpenAPI 3.1 regenerado;
-- pruebas unitarias, integración y E2E con claves/JWKS sintéticos, sin tenant ni secretos en CI.
-
-Historia 2 **no se marca completada** porque faltan dos evidencias humanas obligatorias: seleccionar
-y registrar las duraciones iniciales de access/refresh/sesión conforme a ADR-005, y probar login por
-Database/Google, renovación, restauración y logout en un development build con un tenant Auth0 de
-desarrollo. Esta espera no inicia Historia 3.
+- pruebas unitarias, integración y E2E con claves/JWKS sintéticos, sin tenant ni secretos en CI;
+- tenant exclusivo de desarrollo, Native Application pública, API RS256, audience, callbacks,
+  Offline Access, Refresh Token Rotation y User-Delegated Access validados;
+- accesos reales por Google y Database Connection, `/me`, restauración, logout, reapertura sin
+  restaurar la sesión cerrada y relogin validados en un development build Android;
+- política inicial de desarrollo/MVP: access token de 10 minutos, inactividad de refresh de 7 días,
+  máximo de 30 días y overlap de rotación de 3 segundos, revisable y no duplicada en código;
+- matriz local final: 100 pruebas, migración versionada al día, health/readiness, build y OpenAPI en
+  verde. Historia 3 no se inició durante este cierre.
 
 ### Objetivo
 
@@ -227,8 +229,7 @@ Establecer identidad, aislamiento por hogar y permisos antes de almacenar finanz
 - Como sistema, quiero mapear una identidad externa ya verificada a un User interno y persistir el
   núcleo aislado de hogares antes de exponer autenticación real. **Implementada en Historia 1.**
 - Como usuario móvil, quiero iniciar/cerrar/restaurar una sesión Auth0 y consultar mi identidad
-  interna mediante una API que valide el access token. **Implementada localmente en Historia 2;
-  cierre pendiente de validación nativa con tenant de desarrollo.**
+  interna mediante una API que valide el access token. **Completada en Historia 2.**
 - Como usuario, quiero crear un hogar individual.
 - Como usuario, quiero invitar a mi pareja con control explícito.
 - Como integrante, quiero que mis recursos personales respeten visibilidad.
