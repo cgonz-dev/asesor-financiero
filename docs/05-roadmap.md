@@ -171,10 +171,10 @@ Autenticación real, tablas financieras, ledger, pantallas de producto, IA y des
 
 ### Estado
 
-**Iniciada el 14 de agosto de 2026; no cerrada.** Las Historias 1 y 2 están completadas. Existen la
-persistencia e identidad base, el núcleo de Household/Membership y la autenticación Auth0 validada
-en Android. Invitaciones, autorización Household HTTP, recursos financieros y RLS no se han
-iniciado. El siguiente trabajo secuencial es Historia 3.
+**Iniciada el 14 de agosto de 2026; no cerrada.** Las Historias 1, 2 y 3 están completadas. Historia
+4 tiene implementación y validación automatizada listas, pero permanece abierta hasta completar el
+flujo manual con dos usuarios en Android real. Recursos personales/compartidos, administración
+avanzada de integrantes, recursos financieros y RLS no se han iniciado.
 
 ### Evidencia de Historia 1
 
@@ -211,6 +211,59 @@ iniciado. El siguiente trabajo secuencial es Historia 3.
 - matriz local final: 100 pruebas, migración versionada al día, health/readiness, build y OpenAPI en
   verde. Historia 3 no se inició durante este cierre.
 
+### Evidencia de Historia 3 — completada el 25 de agosto de 2026
+
+- `GET/POST /api/v1/households` y `GET /api/v1/households/{householdId}` autenticados, con contratos
+  Zod compartidos, DTO/OpenAPI derivados y cliente móvil tipado;
+- pipeline `AuthenticationGuard` → `HouseholdContextResolver` → policy de denegación por defecto →
+  caso de uso, con consulta acotada por Household, User y membership `Active`;
+- creación atómica reutiliza `CreateHousehold` y conserva exactamente un Owner `Active`; no hubo
+  cambio de schema ni migración nueva;
+- respuestas `404` indistinguibles para Household inexistente, ajeno o membership no activa, y
+  pruebas IDOR con dos Users/Hogares;
+- pantalla móvil con loading, empty, listado, creación, errores, prevención de doble envío,
+  selección/cambio y limpieza en memoria al logout;
+- UUID del Household preferido en AsyncStorage como dato no sensible separado por User, siempre
+  revalidado contra la lista autorizada; tokens permanecen en Keychain/Keystore;
+- matriz automatizada: 130 pruebas totales, 94 unitarias, 17 de integración y 19 E2E; instalación
+  congelada, lint, formato, typecheck, build, OpenAPI y peer dependencies en verde;
+- un development build Android nuevo se generó e instaló correctamente; la prueba manual confirmó
+  estado vacío, creación del primer y segundo Household, listado, cambio de selección, persistencia
+  tras cerrar/reabrir, consulta de perfil y sesión activa.
+
+### Evidencia de Historia 4 — implementación automática lista; validación Android pendiente
+
+- `HouseholdInvitation` separado de membership, migración versionada, hash SHA-256 único de un
+  token CSPRNG de 256 bits, expiración configurable y constraints de integridad;
+- Owner activo puede crear, listar y revocar; el raw token se entrega una sola vez y no reaparece en
+  listados, persistencia, auditoría ni URLs;
+- aceptación autenticada dirigida a correo verificado, sin usar correo como identidad ni confiar en
+  `userId`, `householdId`, rol o permisos del cliente;
+- aceptación y creación de `Member Active` atómicas, reintento seguro para el mismo User, bloqueo de
+  membresías históricas y rechazo uniforme para token inválido, expirado, revocado o reutilizado;
+- bloqueos de fila y constraints PostgreSQL probados con carreras entre dos requests, dos Users y
+  revocación/aceptación;
+- auditoría mínima `invitation.created`, `invitation.revoked` e `invitation.accepted`, sin secreto,
+  hash o correo;
+- contratos Zod, OpenAPI, cliente móvil y pantalla mínima Owner/invitado implementados;
+- pendiente para cerrar: prueba real de dos cuentas Android, incorporación visible, prohibición
+  administrativa de Member y rechazo de un token revocado.
+
+### Ajuste transversal de UX móvil de Fase 2 — implementado el 26 de agosto de 2026
+
+- la pantalla única se separó en `Inicio`, `Hogar` y `Perfil`, con formularios modales para crear
+  Household, invitar y aceptar una invitación;
+- un provider de aplicación conserva un solo runtime de sesión, Households e invitaciones y limpia
+  el contexto al cerrar o invalidar la sesión;
+- el sistema visual oscuro usa Manrope, tokens locales, iconos y degradados acotados sin framework
+  de UI ni funcionalidades financieras;
+- las acciones Owner/Member siguen derivándose de la membresía autorizada y la API conserva la
+  decisión final; no se modificaron contratos, endpoints, persistencia ni políticas;
+- el código crudo de invitación nunca entra a parámetros de ruta y se elimina al compartir o cerrar
+  su modal;
+- este ajuste mejora la validación y usabilidad de Historia 4, pero no sustituye la prueba manual
+  pendiente con dos identidades Android ni inicia Fase 5.
+
 ### Objetivo
 
 Establecer identidad, aislamiento por hogar y permisos antes de almacenar finanzas.
@@ -230,8 +283,10 @@ Establecer identidad, aislamiento por hogar y permisos antes de almacenar finanz
   núcleo aislado de hogares antes de exponer autenticación real. **Implementada en Historia 1.**
 - Como usuario móvil, quiero iniciar/cerrar/restaurar una sesión Auth0 y consultar mi identidad
   interna mediante una API que valide el access token. **Completada en Historia 2.**
-- Como usuario, quiero crear un hogar individual.
-- Como usuario, quiero invitar a mi pareja con control explícito.
+- Como usuario, quiero crear, consultar y seleccionar sus hogares autorizados. **Completada en
+  Historia 3.**
+- Como usuario, quiero invitar a mi pareja con control explícito. **Implementación automática lista;
+  validación Android pendiente en Historia 4.**
 - Como integrante, quiero que mis recursos personales respeten visibilidad.
 - Como sistema, quiero rechazar todo acceso cruzado entre hogares.
 

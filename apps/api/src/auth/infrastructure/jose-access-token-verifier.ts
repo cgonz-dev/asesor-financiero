@@ -69,11 +69,20 @@ export class JoseAccessTokenVerifier implements AccessTokenVerifier {
         throw new AccessTokenVerificationError();
       }
 
+      const email = payload[this.configuration.emailClaim];
+      const emailVerified = payload[this.configuration.emailVerifiedClaim];
+      const hasUsableEmailClaims =
+        typeof email === 'string' &&
+        email.length > 0 &&
+        email.trim() === email &&
+        typeof emailVerified === 'boolean';
+
       return {
         identity: {
           issuer: this.configuration.issuer,
           provider: 'auth0',
           subject: payload.sub,
+          ...(hasUsableEmailClaims ? { email, emailVerified } : {}),
         },
       };
     } catch (error: unknown) {

@@ -34,7 +34,7 @@ export async function createApplication(
   app.enableCors({
     allowedHeaders: ['Accept', 'Authorization', 'Content-Type'],
     credentials: false,
-    methods: ['GET', 'OPTIONS'],
+    methods: ['GET', 'OPTIONS', 'POST'],
     optionsSuccessStatus: 204,
     origin: options.corsOrigins ?? allowedCorsOriginsFromEnvironment(),
   });

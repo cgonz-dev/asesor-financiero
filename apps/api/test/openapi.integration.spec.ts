@@ -94,6 +94,49 @@ describe('OpenAPI generation', () => {
     });
   });
 
+  it('documents directed Household invitations without exposing persisted token material', () => {
+    const document = createOpenApiDocument(app);
+    const invitationCollection = document.paths['/api/v1/households/{householdId}/invitations'];
+    const invitationRevocation =
+      document.paths['/api/v1/households/{householdId}/invitations/{invitationId}/revoke']?.post;
+    const invitationAcceptance = document.paths['/api/v1/invitations/accept']?.post;
+    const householdMembers = document.paths['/api/v1/households/{householdId}/members']?.get;
+    const createRequest = document.components?.schemas?.CreateHouseholdInvitationRequestDto;
+    const acceptRequest = document.components?.schemas?.AcceptHouseholdInvitationRequestDto;
+    const createResponse = document.components?.schemas?.CreateHouseholdInvitationResponseDto;
+    const serialized = canonicalJson(document);
+
+    expect(invitationCollection?.post?.security).toEqual([{ auth0: [] }]);
+    expect(invitationCollection?.get?.security).toEqual([{ auth0: [] }]);
+    expect(invitationRevocation?.security).toEqual([{ auth0: [] }]);
+    expect(invitationAcceptance?.security).toEqual([{ auth0: [] }]);
+    expect(householdMembers?.security).toEqual([{ auth0: [] }]);
+
+    expect(invitationCollection?.post?.responses['201']).toBeDefined();
+    expect(invitationCollection?.get?.responses['200']).toBeDefined();
+    expect(invitationRevocation?.responses['200']).toBeDefined();
+    expect(invitationAcceptance?.responses['200']).toBeDefined();
+    expect(householdMembers?.responses['200']).toBeDefined();
+
+    expect(createRequest).toMatchObject({
+      additionalProperties: false,
+      required: ['targetEmail'],
+      type: 'object',
+    });
+    expect(acceptRequest).toMatchObject({
+      additionalProperties: false,
+      required: ['invitationToken'],
+      type: 'object',
+    });
+    expect(createResponse).toMatchObject({
+      additionalProperties: false,
+      required: ['invitation', 'invitationToken'],
+      type: 'object',
+    });
+    expect(serialized).not.toContain('tokenHash');
+    expect(serialized).not.toContain('acceptedByUserId');
+  });
+
   it('is deterministic across repeated generation', () => {
     const first = canonicalJson(createOpenApiDocument(app));
     const second = canonicalJson(createOpenApiDocument(app));

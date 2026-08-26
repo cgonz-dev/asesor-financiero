@@ -1,7 +1,21 @@
 export interface AuthConfiguration {
   audience: string;
+  emailClaim: string;
+  emailVerifiedClaim: string;
   issuer: string;
   jwksUrl: URL;
+}
+
+export function verifiedEmailClaimNames(audience: string): {
+  emailClaim: string;
+  emailVerifiedClaim: string;
+} {
+  const namespace = audience.replace(/\/+$/, '');
+
+  return {
+    emailClaim: `${namespace}/email`,
+    emailVerifiedClaim: `${namespace}/email_verified`,
+  };
 }
 
 function requiredEnvironmentValue(
@@ -55,6 +69,7 @@ export function authConfigurationFromEnvironment(
 
   return {
     audience,
+    ...verifiedEmailClaimNames(audience),
     issuer,
     jwksUrl: new URL('.well-known/jwks.json', issuerUrl),
   };

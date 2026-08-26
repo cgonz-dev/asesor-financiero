@@ -2,6 +2,13 @@ import { HouseholdMembershipStatus, HouseholdRole } from '@copiloto/domain';
 import { describe, expect, it, vi } from 'vitest';
 
 import { CreateHousehold } from '../src/households/application/create-household';
+import { HouseholdNotFoundError } from '../src/households/application/errors';
+import { GetHousehold } from '../src/households/application/get-household';
+import {
+  HouseholdAuthorizationPolicy,
+  HouseholdCapability,
+} from '../src/households/application/household-authorization.policy';
+import { HouseholdContextResolver } from '../src/households/application/household-context-resolver';
 import type {
   HouseholdRepository,
   UserHousehold,
@@ -11,7 +18,14 @@ import { ListUserHouseholds } from '../src/households/application/list-user-hous
 const USER_ID = '018f85d7-6b2a-7f25-bfd0-554a23d4b65a';
 const NOW = new Date('2026-08-13T12:00:00.000Z');
 
-function userHousehold(overrides: { householdId?: string; name?: string } = {}): UserHousehold {
+function userHousehold(
+  overrides: {
+    householdId?: string;
+    name?: string;
+    role?: (typeof HouseholdRole)[keyof typeof HouseholdRole];
+    status?: (typeof HouseholdMembershipStatus)[keyof typeof HouseholdMembershipStatus];
+  } = {},
+): UserHousehold {
   const householdId = overrides.householdId ?? '018f85d7-6b2a-7f25-bfd0-554a23d4b65b';
 
   return {
@@ -25,8 +39,8 @@ function userHousehold(overrides: { householdId?: string; name?: string } = {}):
       id: '018f85d7-6b2a-7f25-bfd0-554a23d4b65c',
       householdId,
       userId: USER_ID,
-      role: HouseholdRole.Owner,
-      status: HouseholdMembershipStatus.Active,
+      role: overrides.role ?? HouseholdRole.Owner,
+      status: overrides.status ?? HouseholdMembershipStatus.Active,
       createdAt: NOW,
       updatedAt: NOW,
     },
@@ -37,6 +51,7 @@ function repositoryFake(): HouseholdRepository {
   return {
     createWithInitialOwner: vi.fn(),
     findActiveForUser: vi.fn(),
+    findActiveForUserAndHousehold: vi.fn(),
     findActiveMembership: vi.fn(),
   };
 }
@@ -69,6 +84,73 @@ describe('CreateHousehold', () => {
       'Household name must not be empty.',
     );
     expect(repository.createWithInitialOwner).not.toHaveBeenCalled();
+  });
+});
+
+describe('Household context authorization', () => {
+  it('allows basic configuration only to Active Owner or Member memberships', () => {
+    const policy = new HouseholdAuthorizationPolicy();
+
+    expect(
+      policy.allows(
+        userHousehold({ role: HouseholdRole.Owner }).membership,
+        HouseholdCapability.ViewBasicConfiguration,
+      ),
+    ).toBe(true);
+    expect(
+      policy.allows(
+        userHousehold({ role: HouseholdRole.Member }).membership,
+        HouseholdCapability.ViewBasicConfiguration,
+      ),
+    ).toBe(true);
+
+    for (const status of [
+      HouseholdMembershipStatus.Suspended,
+      HouseholdMembershipStatus.Left,
+      HouseholdMembershipStatus.Removed,
+    ]) {
+      expect(
+        policy.allows(
+          userHousehold({ status }).membership,
+          HouseholdCapability.ViewBasicConfiguration,
+        ),
+      ).toBe(false);
+    }
+
+    expect(policy.allows(userHousehold().membership, 'unknownCapability')).toBe(false);
+  });
+
+  it('resolves an authorized Household through the scoped repository query', async () => {
+    const repository = repositoryFake();
+    const expected = userHousehold();
+    vi.mocked(repository.findActiveForUserAndHousehold).mockResolvedValue(expected);
+    const resolver = new HouseholdContextResolver(repository, new HouseholdAuthorizationPolicy());
+    const useCase = new GetHousehold(resolver);
+
+    await expect(
+      useCase.execute({
+        householdId: expected.household.id,
+        internalUserId: USER_ID,
+      }),
+    ).resolves.toEqual(expected);
+    expect(repository.findActiveForUserAndHousehold).toHaveBeenCalledWith({
+      householdId: expected.household.id,
+      userId: USER_ID,
+    });
+  });
+
+  it('denies by default without revealing whether the Household exists', async () => {
+    const repository = repositoryFake();
+    vi.mocked(repository.findActiveForUserAndHousehold).mockResolvedValue(null);
+    const resolver = new HouseholdContextResolver(repository, new HouseholdAuthorizationPolicy());
+
+    await expect(
+      resolver.resolve({
+        capability: HouseholdCapability.ViewBasicConfiguration,
+        householdId: '018f85d7-6b2a-7f25-bfd0-554a23d4b65b',
+        internalUserId: USER_ID,
+      }),
+    ).rejects.toBeInstanceOf(HouseholdNotFoundError);
   });
 });
 

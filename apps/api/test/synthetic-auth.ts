@@ -1,12 +1,17 @@
 import { createServer, type Server } from 'node:http';
 
-import type { AuthConfiguration } from '../src/auth/config/auth-configuration';
+import {
+  type AuthConfiguration,
+  verifiedEmailClaimNames,
+} from '../src/auth/config/auth-configuration';
 
 type JoseModule = typeof import('jose', { with: { 'resolution-mode': 'import' } });
 type KeyPair = Awaited<ReturnType<JoseModule['generateKeyPair']>>;
 
 export interface SyntheticTokenOptions {
   audience?: string;
+  email?: string;
+  emailVerified?: boolean;
   expiresAt?: number;
   issuer?: string;
   keyId?: string | null;
@@ -96,12 +101,14 @@ export async function startSyntheticAuthServer(): Promise<SyntheticAuthServer> {
 
   const issuer = `http://127.0.0.1:${address.port}/`;
   const audience = 'https://api.copiloto.example.test';
+  const emailClaims = verifiedEmailClaimNames(audience);
 
   return {
     audience,
     issuer,
     configuration: () => ({
       audience,
+      ...emailClaims,
       issuer,
       jwksUrl: new URL('.well-known/jwks.json', issuer),
     }),
@@ -122,7 +129,16 @@ export async function startSyntheticAuthServer(): Promise<SyntheticAuthServer> {
       }
 
       const now = Math.floor(Date.now() / 1_000);
-      let token = new jose.SignJWT({})
+      const tokenAudience = options.audience ?? audience;
+      const tokenEmailClaims = verifiedEmailClaimNames(tokenAudience);
+      let token = new jose.SignJWT({
+        ...(options.email === undefined
+          ? {}
+          : {
+              [tokenEmailClaims.emailClaim]: options.email,
+              [tokenEmailClaims.emailVerifiedClaim]: options.emailVerified ?? false,
+            }),
+      })
         .setProtectedHeader({
           alg: 'RS256',
           ...(options.keyId === null ? {} : { kid: signingKeyId }),
@@ -130,7 +146,7 @@ export async function startSyntheticAuthServer(): Promise<SyntheticAuthServer> {
         })
         .setIssuedAt(now)
         .setIssuer(options.issuer ?? issuer)
-        .setAudience(options.audience ?? audience)
+        .setAudience(tokenAudience)
         .setExpirationTime(options.expiresAt ?? now + 300);
 
       if (options.subject !== null) {

@@ -32,12 +32,14 @@ enum HouseholdMembershipStatus {
 }
 
 model User {
-  id                 String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  status             UserStatus            @default(Active)
-  createdAt          DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt          DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
-  externalIdentities ExternalIdentity[]
-  memberships        HouseholdMembership[]
+  id                  String                @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  status              UserStatus            @default(Active)
+  createdAt           DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt           DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
+  externalIdentities  ExternalIdentity[]
+  memberships         HouseholdMembership[]
+  acceptedInvitations HouseholdInvitation[] @relation("HouseholdInvitationAcceptedBy")
+  auditEvents         AuditEvent[]
 
   @@map("app_user")
 }
@@ -65,23 +67,63 @@ model Household {
   createdAt   DateTime              @default(now()) @map("created_at") @db.Timestamptz(3)
   updatedAt   DateTime              @updatedAt @map("updated_at") @db.Timestamptz(3)
   memberships HouseholdMembership[]
+  invitations HouseholdInvitation[]
+  auditEvents AuditEvent[]
 
   @@map("household")
 }
 
 model HouseholdMembership {
-  id          String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
-  householdId String                    @map("household_id") @db.Uuid
-  userId      String                    @map("user_id") @db.Uuid
-  role        HouseholdRole
-  status      HouseholdMembershipStatus @default(Active)
-  createdAt   DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
-  updatedAt   DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(3)
-  household   Household                 @relation(fields: [householdId], references: [id], onDelete: Restrict, onUpdate: Cascade)
-  user        User                      @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  id                 String                    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  householdId        String                    @map("household_id") @db.Uuid
+  userId             String                    @map("user_id") @db.Uuid
+  role               HouseholdRole
+  status             HouseholdMembershipStatus @default(Active)
+  createdAt          DateTime                  @default(now()) @map("created_at") @db.Timestamptz(3)
+  updatedAt          DateTime                  @updatedAt @map("updated_at") @db.Timestamptz(3)
+  household          Household                 @relation(fields: [householdId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  user               User                      @relation(fields: [userId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdInvitations HouseholdInvitation[]     @relation("HouseholdInvitationCreator")
 
+  @@unique([id, householdId], map: "uq_household_membership_id_household")
   @@unique([householdId, userId], map: "uq_household_membership_household_user")
   @@index([householdId, status], map: "idx_household_membership_household_status")
   @@index([userId, status, householdId], map: "idx_household_membership_user_status_household")
   @@map("household_membership")
+}
+
+model HouseholdInvitation {
+  id                    String              @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  householdId           String              @map("household_id") @db.Uuid
+  createdByMembershipId String              @map("created_by_membership_id") @db.Uuid
+  targetEmail           String              @map("target_email") @db.VarChar(320)
+  tokenHash             Bytes               @unique(map: "uq_household_invitation_token_hash") @map("token_hash") @db.ByteA
+  expiresAt             DateTime            @map("expires_at") @db.Timestamptz(3)
+  createdAt             DateTime            @default(now()) @map("created_at") @db.Timestamptz(3)
+  revokedAt             DateTime?           @map("revoked_at") @db.Timestamptz(3)
+  acceptedAt            DateTime?           @map("accepted_at") @db.Timestamptz(3)
+  acceptedByUserId      String?             @map("accepted_by_user_id") @db.Uuid
+  household             Household           @relation(fields: [householdId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  createdByMembership   HouseholdMembership @relation("HouseholdInvitationCreator", fields: [createdByMembershipId, householdId], references: [id, householdId], onDelete: Restrict, onUpdate: Cascade)
+  acceptedByUser        User?               @relation("HouseholdInvitationAcceptedBy", fields: [acceptedByUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([householdId, createdAt], map: "idx_household_invitation_household_created")
+  @@index([householdId, revokedAt, acceptedAt], map: "idx_household_invitation_household_state")
+  @@map("household_invitation")
+}
+
+model AuditEvent {
+  id          String    @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  householdId String    @map("household_id") @db.Uuid
+  actorUserId String    @map("actor_user_id") @db.Uuid
+  action      String    @db.VarChar(100)
+  result      String    @db.VarChar(32)
+  resourceId  String    @map("resource_id") @db.Uuid
+  createdAt   DateTime  @default(now()) @map("created_at") @db.Timestamptz(3)
+  household   Household @relation(fields: [householdId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+  actorUser   User      @relation(fields: [actorUserId], references: [id], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([householdId, createdAt], map: "idx_audit_event_household_created")
+  @@index([actorUserId, createdAt], map: "idx_audit_event_actor_created")
+  @@map("audit_event")
 }

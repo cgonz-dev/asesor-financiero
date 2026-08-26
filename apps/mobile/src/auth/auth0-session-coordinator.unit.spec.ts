@@ -109,6 +109,22 @@ describe('Auth0SessionCoordinator', () => {
     expect(getCredentials).toHaveBeenNthCalledWith(2, { forceRefresh: true });
   });
 
+  it('clears the session when token renewal reports revocation outside restoration', async () => {
+    const clearLocalCredentials = vi.fn(async () => undefined);
+    const coordinator = new Auth0SessionCoordinator(
+      fakeSdk({
+        clearLocalCredentials,
+        getCredentials: vi.fn(async () => {
+          throw new SessionSdkError('invalidGrant');
+        }),
+      }),
+    );
+
+    await expect(coordinator.getAccessToken()).rejects.toMatchObject({ code: 'invalidGrant' });
+    expect(clearLocalCredentials).toHaveBeenCalledOnce();
+    expect(coordinator.currentSnapshot()).toEqual({ status: 'unauthenticated' });
+  });
+
   it('logs in through the SDK and resolves the internal profile', async () => {
     const authorize = vi.fn(async () => VALID_CREDENTIALS);
     const coordinator = new Auth0SessionCoordinator(fakeSdk({ authorize }));

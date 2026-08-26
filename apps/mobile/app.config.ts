@@ -5,7 +5,7 @@ const AUTH0_CUSTOM_SCHEME = 'copilotofinanciero';
 
 export default ({ config }: ConfigContext): ExpoConfig => {
   const auth0Domain = process.env.EXPO_PUBLIC_AUTH0_DOMAIN?.trim();
-  const plugins = [...(config.plugins ?? [])];
+  const plugins = [...(config.plugins ?? []), 'expo-font'];
 
   if (auth0Domain !== undefined && auth0Domain.length > 0) {
     plugins.push([

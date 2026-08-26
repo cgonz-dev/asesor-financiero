@@ -6,9 +6,11 @@
 cliente móvil mínimo, OpenAPI reproducible, CI inicial y modo LAN quedaron validados en Fase 1. La
 Historia 1 de Fase 2 implementa PostgreSQL/Prisma, identidad interna, el núcleo mínimo de Household
 y Membership, y readiness. Historia 2 implementa y valida el límite Auth0, sesión móvil y `/me` en
-un development build Android contra un tenant exclusivo de desarrollo. ADR-005 y ADR-006 están
-aceptados; invitaciones, autorización Household y recursos financieros permanecen fuera de este
-incremento.
+un development build Android contra un tenant exclusivo de desarrollo. Historia 3 implementa los
+endpoints Household autenticados, el primer resolver/policy de ADR-006 y la experiencia móvil de
+lista, creación y selección, validada en un development build Android. Historia 4 implementa
+invitaciones e incorporación de Member y espera su validación manual con dos usuarios Android.
+Administración avanzada de integrantes, recursos financieros y RLS permanecen fuera del incremento.
 
 ## Objetivos arquitectónicos
 
@@ -34,15 +36,16 @@ incremento.
 | Contratos | Paquete compartido con schemas Zod y tipos inferidos | Zod 4.4.3 y `nestjs-zod` 5.5.0 validados en Fase 1 según [ADR-007](adr/0007-contratos-validacion-openapi-y-cliente.md) |
 | Asistente | OpenAI Responses API | Tool calling y salidas estructuradas |
 | Procesos programados | Redis + BullMQ | Solo al implementar recordatorios/jobs |
-| Autenticación | Auth0 mediante OAuth 2.0/OIDC | Límite API y sesión móvil implementados conforme a [ADR-005](adr/0005-autenticacion-y-ciclo-de-sesion-movil.md); validación nativa con tenant pendiente |
+| Autenticación | Auth0 mediante OAuth 2.0/OIDC | Límite API y sesión móvil implementados y validados conforme a [ADR-005](adr/0005-autenticacion-y-ciclo-de-sesion-movil.md) |
 | Panel web | Fuera del MVP | Previsto posteriormente |
 | Bancos/pagos | Fuera del MVP | Sin conexiones ni ejecución automática |
 
 ## Estructura inicial
 
 Fase 1 creó la estructura base. La Historia 1 de Fase 2 añadió dominio mínimo independiente y
-adaptadores de persistencia dentro de la API. Historia 2 añade autenticación sin introducir lógica
-Household HTTP ni financiera; las áreas de fases posteriores siguen sin lógica funcional:
+adaptadores de persistencia dentro de la API. Historia 2 añade autenticación, Historia 3 incorpora
+el primer límite Household HTTP/móvil e Historia 4 añade invitaciones dirigidas y auditoría mínima,
+sin introducir lógica financiera; las áreas de fases posteriores siguen sin lógica funcional:
 
 ```text
 apps/
@@ -140,6 +143,11 @@ todavía requiere una función Preview para declarar ese índice parcial, por lo
 versionada lo expresa en SQL revisado; el caso de uso crea Household y Owner Active en la misma
 transacción para garantizar exactamente uno al inicio.
 
+La segunda migración de Fase 2 agrega `household_invitation` y `audit_event`. La invitación mantiene
+solo el hash del token, su Household, la membership Owner creadora, la restricción de correo y sus
+timestamps de ciclo. La auditoría actual es deliberadamente mínima y solo registra los tres eventos
+de invitación implementados; no sustituye el diseño general pendiente de ADR-019.
+
 Prisma, sus repositorios y las transacciones viven en `apps/api`; `packages/domain` no importa
 NestJS ni Prisma. El desarrollo local usa `prisma dev` porque el motor Docker disponible no estaba
 operativo durante la implementación. CI usa PostgreSQL real efímero y aplica solo migraciones
@@ -159,7 +167,7 @@ Para fases posteriores se prevén, sin que sean tablas definitivas todavía:
 - `goal`;
 - `transaction_draft` o equivalente;
 - `idempotency_record`;
-- `audit_event`.
+- ampliación de `audit_event` para el sistema financiero y operacional completo.
 
 Esta lista futura identifica conceptos, no tablas definitivas. Normalización, historización, claves,
 índices y retención necesitan diseño/ADR antes de implementarse.
@@ -252,6 +260,51 @@ Connection, restauración, `/me`, logout y relogin en un development build Andro
 inicial del tenant usa access tokens de 10 minutos, inactividad de refresh de 7 días, máximo de 30
 días, rotación y overlap de 3 segundos; permanece revisable y no se duplica en código.
 
+## Invitaciones Household implementadas en Historia 4
+
+`HouseholdInvitation` es independiente de `HouseholdMembership`. Conserva Household, membership
+creadora, correo objetivo normalizado, SHA-256 del secreto aleatorio, expiración y marcas de
+revocación/aceptación. El token crudo tiene 256 bits, formato base64url y solo existe en la respuesta
+de creación y en memoria móvil; nunca se persiste ni se coloca en una URL. La duración inicial de
+siete días está centralizada y es configurable antes de iniciar la API.
+
+El Owner activo puede crear, listar y revocar invitaciones. La aceptación recibe únicamente el token
+en un body autenticado, deriva Household de la invitación persistida y compara la restricción de
+entrega contra un correo verificado firmado dentro del access token. `issuer + subject` sigue siendo
+la identidad estable; el correo no resuelve ni enlaza Users. Una transacción PostgreSQL con bloqueo
+de fila crea `HouseholdMembership(Member, Active)`, consume la invitación y escribe el evento de
+auditoría. La misma exclusión serializa aceptación/aceptación y aceptación/revocación.
+
+La base impide hashes duplicados, cruces entre la membership creadora y otro Household, estados
+aceptado/revocado simultáneos y membresías Household/User duplicadas. Los eventos mínimos son
+`invitation.created`, `invitation.revoked` e `invitation.accepted`, sin token, hash ni correo. El
+cliente puede compartir texto por la hoja nativa del sistema, pegar y aceptar el código, refrescar
+Households y mostrar una proyección mínima de integrantes. No existen magic links, correo
+transaccional, roles configurables ni administración avanzada de membresías.
+
+La implementación automática y las pruebas PostgreSQL están listas; Historia 4 permanece abierta
+hasta completar en Android real la validación Owner/User invitado exigida por sus criterios.
+
+## Navegación y sistema visual móvil de Fase 2
+
+La reorganización visual de Fase 2 no adelanta la aplicación financiera de Fase 5. Expo Router usa
+un Stack raíz para la compuerta de sesión y los modales de crear hogar, invitar y aceptar, más un
+grupo de Tabs estable para `Inicio`, `Hogar` y `Perfil`. Las pestañas contienen únicamente identidad,
+selección de Household, integrantes e invitaciones ya autorizadas; no presentan saldos, cuentas,
+movimientos ni un dashboard financiero ficticio.
+
+`MobileAppProvider` es la composición móvil interna que crea una sola instancia del runtime y
+publica snapshots y acciones de los coordinadores existentes. La restauración de Auth0 sucede una
+vez; los cambios de ruta no recrean Credentials Manager, clientes REST ni coordinadores. Al perder
+la sesión se limpian Households, selección e invitaciones antes de volver a la compuerta. La
+selección persistida sigue siendo una preferencia revalidada por servidor y nunca autorización.
+
+El sistema visual local define tokens de color, espaciado, radios, tipografía Manrope y componentes
+acotados sobre React Native. El modo es oscuro y fijo; degradados e iconos son presentación, no
+semántica de estado ni lógica de permisos. No se incorporó un framework de UI, desenfoque o motor de
+animación. El token crudo de invitación no cruza la navegación: solo vive en el snapshot en memoria
+del coordinador y se descarta al compartir, cerrar o desmontar el modal.
+
 ## Asistente e integración con OpenAI
 
 El orquestador del backend:
@@ -302,9 +355,15 @@ La arquitectura completa de sincronización queda pendiente de ADR y fuera del M
 - Secretos se obtienen de un gestor/entorno seguro, no del repositorio.
 - TLS en tránsito.
 - Las credenciales móviles persistidas usan el Credentials Manager de Auth0 sobre
-  Keychain/Keystore; no se usa AsyncStorage, localStorage ni SQLite para tokens.
+  Keychain/Keystore; no se usa AsyncStorage, localStorage ni SQLite para tokens. AsyncStorage guarda
+  únicamente el UUID no sensible del Household preferido, separado por User y revalidado contra la
+  lista autorizada antes de reutilizarlo.
 - La API usa una allowlist estática de issuer/audience y no confía roles u Organizations de Auth0
   para autorización Household.
+- El pipeline implementado es `AuthenticationGuard` → `HouseholdContextResolver` →
+  `HouseholdAuthorizationPolicy` → caso de uso. El resolver consulta desde el inicio por
+  `householdId + User + Active HouseholdMembership`; deniega por defecto y no revela si un UUID
+  inexistente, ajeno o inactivo corresponde a un registro real.
 - Logs, trazas y prompts se redactan.
 - Auditoría de accesos y escrituras sensibles.
 - Backups, restauración, exportación y eliminación se diseñan antes de beta.
@@ -365,7 +424,7 @@ artefacto OpenAPI versionado permanezca actualizado. No despliega ni publica art
 | ADR-019 | Observabilidad, auditoría y redacción de datos sensibles | Fase 3; completar antes de beta | Pendiente |
 | ADR-020 | Backups, restauración, RPO/RTO y continuidad | Antes de beta | Pendiente |
 
-ADR-001, ADR-005, ADR-006 y ADR-007 están aceptados. Las Historias 1 y 2 de Fase 2 están completadas;
-esto no amplía por sí mismo el alcance a invitaciones, autorización Household ni historias
-financieras. Los demás IDs son reservas de trabajo hasta que exista contexto, alternativas y una
-decisión revisable.
+ADR-001, ADR-005, ADR-006 y ADR-007 están aceptados. Las Historias 1, 2 y 3 de Fase 2 están
+completadas; Historia 4 tiene implementación automática lista y validación Android pendiente. Esto
+no amplía el alcance a administración avanzada de integrantes, RLS ni historias financieras. Los
+demás IDs son reservas de trabajo hasta que exista contexto, alternativas y una decisión revisable.

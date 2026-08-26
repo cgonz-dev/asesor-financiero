@@ -150,8 +150,25 @@ export class Auth0SessionCoordinator implements TokenProvider {
       throw new SessionSdkError('noCredentials');
     }
 
-    const credentials = await this.getCredentials(options.forceRefresh ?? false);
-    return credentials.accessToken;
+    try {
+      const credentials = await this.getCredentials(options.forceRefresh ?? false);
+      return credentials.accessToken;
+    } catch (error: unknown) {
+      if (isInvalidSession(error)) {
+        await this.invalidateSession();
+      }
+
+      throw error;
+    }
+  }
+
+  async invalidateSession(): Promise<void> {
+    ++this.generation;
+    this.cancelAuthenticatedRequests();
+    this.accessToken = undefined;
+    this.renewalFlight = undefined;
+    await this.safeClearLocalCredentials();
+    this.transition({ status: 'unauthenticated' });
   }
 
   registerAuthenticatedRequest(controller: AbortController): () => void {

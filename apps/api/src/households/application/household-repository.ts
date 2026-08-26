@@ -37,6 +37,7 @@ export interface ActiveMembershipScope {
 export interface HouseholdRepository {
   createWithInitialOwner(input: CreateHouseholdWithInitialOwnerInput): Promise<UserHousehold>;
   findActiveForUser(userId: string): Promise<UserHousehold[]>;
+  findActiveForUserAndHousehold(scope: ActiveMembershipScope): Promise<UserHousehold | null>;
   findActiveMembership(scope: ActiveMembershipScope): Promise<HouseholdMembershipRecord | null>;
 }
 

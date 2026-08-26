@@ -85,9 +85,18 @@ El guard implementado acepta solo access tokens RS256 para issuer/audience confi
 con caché y timeout, y deriva la identidad externa de `issuer + subject`; no acepta ID tokens,
 correo, `userId` ni `householdId`. El móvil usa el Credentials Manager oficial sobre
 Keychain/Keystore y mantiene el access token en memoria cuando es utilizable. No existe bypass de
-desarrollo, almacenamiento en AsyncStorage/localStorage ni autorización basada en roles u
-Organizations de Auth0. Invitaciones, revocación global/granular y autorización Household siguen
-fuera del incremento actual.
+desarrollo, almacenamiento de tokens en AsyncStorage/localStorage ni autorización basada en roles u
+Organizations de Auth0. Historia 3 usa AsyncStorage únicamente para el UUID no sensible del
+Household preferido, separado por User y revalidado contra la lista autorizada; ese dato nunca
+concede acceso.
+
+Historia 4 implementa invitaciones dirigidas sin usar correo como identidad. La API solo acepta el
+correo objetivo cuando un Owner crea la restricción de entrega y lo compara durante aceptación con
+claims de correo verificado provenientes del access token firmado. El cliente no envía correo para
+aceptar. El código de invitación es CSPRNG de 256 bits, se transmite únicamente en el body de un POST
+autenticado, permanece solo en memoria móvil y la base conserva únicamente SHA-256. Expira, puede
+revocarse, es de un solo uso y su aceptación se serializa con bloqueo PostgreSQL. No aparece en URLs,
+logs, auditoría, AsyncStorage, SecureStore o listados posteriores.
 
 ## Autorización del servidor
 
@@ -97,6 +106,27 @@ fuera del incremento actual.
 - Toda entrada que relacione cuentas, movimientos, categorías, compromisos o snapshots valida compatibilidad de hogar.
 - Operaciones de varios recursos se autorizan como conjunto, no solo individualmente.
 - La autorización se prueba con casos negativos, IDOR, enumeración, roles revocados y membresías inactivas.
+
+Historia 3 implementa el primer límite de esta política: el `User` se deriva del access token, el
+`householdId` solicitado se combina con una `HouseholdMembership Active`, una policy pequeña deniega
+por defecto y el caso de uso solo recibe el contexto resuelto. La consulta está acotada desde el
+repositorio y responde el mismo `404` para Household inexistente, ajeno o membership no activa. No
+existe header global, Household activo server-side ni confianza en IDs o roles enviados por el
+cliente.
+
+Las operaciones de invitación vuelven a resolver `User + Household + Active HouseholdMembership`
+y `Role` en servidor. Solo Owner administra invitaciones; Member recibe `403` dentro de un Household
+conocido y un recurso ajeno permanece indistinguible mediante `404`. La aceptación deriva Household
+de la invitación persistida y siempre crea Member; Auth0 Organizations, roles del token y parámetros
+del cliente no conceden autorización. Los cambios atómicos escriben auditoría mínima sin token,
+hash ni correo.
+
+Todavía no existe infraestructura transversal de rate limiting. Mientras el servicio siga limitado
+a desarrollo, aceptación reduce fuerza bruta y enumeración mediante token de 256 bits, formato y
+longitud acotados, errores uniformes y fail closed. Una política proporcionada de rate limiting es
+gate obligatorio antes de exposición pública; no se añadió un subsistema aislado solo para esta
+historia. La auditoría actual registra resultados exitosos; correlación e intentos fallidos forman
+parte del trabajo general de ADR-019.
 
 ## Protección de datos y secretos
 

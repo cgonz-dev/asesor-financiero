@@ -10,9 +10,10 @@
     "start": "expo start",
     "android": "expo start --android",
     "android:dev": "expo run:android --device",
-    "android:build:cloud": "eas build --platform android --profile development",
-    "eas:init": "eas init",
-    "eas:login": "eas login",
+    "android:build:cloud": "pnpm dlx eas-cli@22.4.0 build --platform android --profile development",
+    "eas:env:set": "pnpm dlx eas-cli@22.4.0 env:set",
+    "eas:init": "pnpm dlx eas-cli@22.4.0 init",
+    "eas:login": "pnpm dlx eas-cli@22.4.0 login",
     "ios": "expo start --ios",
     "ios:dev": "expo run:ios --device",
     "web": "expo start --web",
@@ -20,12 +21,18 @@
   },
   "dependencies": {
     "@copiloto/contracts": "workspace:*",
-    "expo": "~57.0.9",
-    "expo-constants": "~57.0.8",
-    "expo-dev-client": "~57.0.11",
-    "expo-linking": "~57.0.4",
-    "expo-router": "~57.0.9",
+    "@expo-google-fonts/manrope": "^0.4.2",
+    "@expo/vector-icons": "^15.1.1",
+    "@react-native-async-storage/async-storage": "2.2.0",
+    "expo": "~57.0.16",
+    "expo-constants": "~57.0.14",
+    "expo-dev-client": "~57.0.15",
+    "expo-font": "~57.0.1",
+    "expo-linear-gradient": "~57.0.1",
+    "expo-linking": "~57.0.7",
+    "expo-router": "~57.0.16",
     "expo-status-bar": "~57.0.1",
+    "expo-system-ui": "~57.0.2",
     "react": "19.2.3",
     "react-dom": "19.2.3",
     "react-native": "0.86.2",
@@ -37,7 +44,6 @@
   },
   "devDependencies": {
     "@copiloto/typescript-config": "workspace:*",
-    "@types/react": "~19.2.2",
-    "eas-cli": "22.0.0"
+    "@types/react": "~19.2.2"
   }
 }

@@ -12,28 +12,32 @@ estructuradas y explicaciones útiles, sin convertir a la IA en fuente de verdad
 - **Fase 1 cerrada:** bootstrap reproducible, health contractual, OpenAPI, cliente móvil mínimo,
   CI inicial y modo LAN completados y verificados.
 - La ejecución real de GitHub Actions terminó correctamente en verde.
-- **Fase 2 iniciada, pero no terminada.** Las Historias 1 y 2 están completadas: existen la
-  persistencia e identidad base, el núcleo de `Household`/`HouseholdMembership` y la autenticación
-  Auth0 validada en un development build Android contra un tenant exclusivo de desarrollo.
+- **Fase 2 iniciada, pero no terminada.** Las Historias 1, 2 y 3 están completadas. La implementación
+  automática de Historia 4 está lista y permanece abierta hasta validar el flujo completo con dos
+  usuarios en Android real.
 - Existe código no financiero para API, móvil, contratos, dominio mínimo y persistencia PostgreSQL.
-- No existen invitaciones, endpoints Household, ledger, operaciones monetarias ni integración de
-  IA.
+- Existen invitaciones dirigidas, opacas, expirables, revocables y de un solo uso; todavía no se ha
+  registrado la validación manual de incorporación de una segunda persona.
+- No existen administración avanzada de integrantes, ledger, operaciones monetarias ni integración
+  de IA.
 - ADR-001, ADR-005, ADR-006 y ADR-007 permanecen aceptados.
 
 ## Arquitectura implementada en este incremento
 
 - monorepo TypeScript con pnpm workspaces;
-- API NestJS con health/readiness públicos, `GET /api/v1/me` autenticado y documentación local en
-  `/api/docs`;
+- API NestJS con health/readiness públicos, `/me` y endpoints Household autenticados, y
+  documentación local en `/api/docs`;
 - PostgreSQL con Prisma 7.9.1, migración versionada y adaptadores dentro de `apps/api`;
-- `User`, `ExternalIdentity`, `Household` y `HouseholdMembership`, sin modelos financieros;
-- casos de uso internos para resolver identidad verificada, crear un hogar con Owner inicial y
-  listar hogares activos; no son endpoints públicos;
+- `User`, `ExternalIdentity`, `Household`, `HouseholdMembership`, `HouseholdInvitation` y auditoría
+  mínima de invitaciones, sin modelos financieros;
+- casos de uso para resolver identidad verificada, crear un hogar con Owner inicial, listar hogares,
+  resolver un contexto Household autorizado e incorporar un `Member Active` mediante invitación;
 - `GET /api/v1/readiness`, que comprueba PostgreSQL sin revelar configuración o errores internos;
 - Auth0 como proveedor OAuth 2.0/OIDC: el móvil usa Authorization Code + PKCE y la API verifica
   access tokens RS256 por issuer, audience y JWKS antes de resolver `issuer + subject`;
-- aplicación React Native con Expo Router, coordinador de sesión y Credentials Manager nativo para
-  Keychain/Keystore; Expo Web no persiste ni simula la sesión móvil;
+- aplicación React Native con Expo Router, coordinadores de sesión, Households e invitaciones,
+  Credentials Manager nativo para Keychain/Keystore y una preferencia no sensible de Household
+  seleccionado;
 - `packages/contracts` independiente de frameworks, con Zod como fuente canónica;
 - cliente REST móvil con transporte inyectable, timeout, cancelación y validación de respuesta;
 - configuraciones compartidas de TypeScript, ESLint y Prettier;
@@ -56,10 +60,11 @@ La arquitectura completa prevista se mantiene en
 | NestJS | 11.1.28 |
 | Zod | 4.4.3 |
 | `nestjs-zod` | 5.5.0 |
-| Expo / Expo Router | 57.0.9 |
-| Expo Dev Client | 57.0.11 |
+| Expo / Expo Router | 57.0.16 |
+| Expo Dev Client | 57.0.15 |
 | React Native / React | 0.86.2 / 19.2.3 |
 | Auth0 React Native SDK | 5.11.0 |
+| AsyncStorage | 2.2.0 |
 | JOSE | 6.2.10 |
 | Prisma | 7.9.1 |
 | PostgreSQL en CI | 18.4 |
@@ -74,8 +79,8 @@ usa una variante estricta; el cliente usa una variante compatible derivada del m
 
 ```text
 apps/
-  api/                 # NestJS, autenticación, Prisma, health/readiness, /me y OpenAPI
-  mobile/              # Expo Router, sesión Auth0 y cliente REST
+  api/                 # NestJS, auth, Households, Prisma, health/readiness y OpenAPI
+  mobile/              # Expo Router, sesión Auth0, Households y cliente REST
 packages/
   contracts/           # schemas Zod y tipos inferidos, sin acoplamiento a Auth0
   domain/              # reglas mínimas de identidad y Household, sin frameworks
@@ -127,7 +132,7 @@ permanecen separados. Una migración aplicada/versionada no se modifica: cualqui
 usa una migración nueva. Para detener la base, presiona `Ctrl+C` en su terminal o ejecuta
 `pnpm db:dev:stop` desde otra terminal.
 
-Las pruebas de integración limpian únicamente las cuatro tablas de esta historia. El guard de
+Las pruebas de integración limpian únicamente las seis tablas no financieras actuales. El guard de
 pruebas acepta solo la instancia local documentada (`template1` en el puerto 51214) o la base
 efímera nominal de CI; rechaza cualquier otra URL, incluso si apunta a `localhost`.
 
@@ -237,6 +242,12 @@ Usa un tenant exclusivo de desarrollo, sin personas ni datos reales:
 6. Habilita una Database Connection y Google únicamente para esta Native Application. Configura
    Google con credenciales de desarrollo propias; no pegues secretos en el repositorio. Magic links
    y Apple permanecen deshabilitados en esta historia.
+7. Crea y despliega una **Post Login Action** que añada al access token de esta API el correo y su
+   estado de verificación en los claims `<AUDIENCE-SIN-DIAGONAL-FINAL>/email` y
+   `<AUDIENCE-SIN-DIAGONAL-FINAL>/email_verified`. Los valores deben provenir de `event.user.email`
+   y `event.user.email_verified`; no agregues el correo si no está verificado. Vincula la Action al
+   Login Flow. El prefijo debe coincidir exactamente con `AUTH0_AUDIENCE`. Estos claims solo limitan
+   quién puede aceptar una invitación dirigida: no identifican al `User` ni conceden permisos.
 
 En `apps/mobile/.env.local` guarda únicamente valores públicos:
 
@@ -264,7 +275,8 @@ ignorados por Git; `.env.example` conserva solo ejemplos genéricos.
 La vía más simple en Windows usa EAS Build en la nube. El perfil `development` de
 `apps/mobile/eas.json` genera exclusivamente un development client Android en formato APK con
 distribución interna: no crea un AAB, no publica en Play Store y no define un perfil de producción.
-EAS CLI está fijado como dependencia local; no requiere una instalación global.
+EAS CLI se ejecuta bajo demanda con la versión fijada en los scripts y `eas.json`; no se instala
+globalmente ni permanece como dependencia local del proyecto.
 
 Después de crear una cuenta de Expo, inicia y vincula el proyecto desde la raíz:
 
@@ -277,9 +289,9 @@ Registra en el ambiente remoto `development` solo los tres identificadores públ
 los valores del tenant de desarrollo, nunca un Client Secret:
 
 ```bash
-pnpm --filter @copiloto/mobile exec eas env:set --name EXPO_PUBLIC_AUTH0_DOMAIN --value <DOMINIO-AUTH0-SIN-HTTPS> --environment development --visibility plaintext
-pnpm --filter @copiloto/mobile exec eas env:set --name EXPO_PUBLIC_AUTH0_CLIENT_ID --value <CLIENT-ID-PUBLICO> --environment development --visibility plaintext
-pnpm --filter @copiloto/mobile exec eas env:set --name EXPO_PUBLIC_AUTH0_AUDIENCE --value <IDENTIFIER-DE-LA-API> --environment development --visibility plaintext
+pnpm --filter @copiloto/mobile eas:env:set --name EXPO_PUBLIC_AUTH0_DOMAIN --value <DOMINIO-AUTH0-SIN-HTTPS> --environment development --visibility plaintext
+pnpm --filter @copiloto/mobile eas:env:set --name EXPO_PUBLIC_AUTH0_CLIENT_ID --value <CLIENT-ID-PUBLICO> --environment development --visibility plaintext
+pnpm --filter @copiloto/mobile eas:env:set --name EXPO_PUBLIC_AUTH0_AUDIENCE --value <IDENTIFIER-DE-LA-API> --environment development --visibility plaintext
 ```
 
 Crea el APK interno:
@@ -326,6 +338,106 @@ El cierre de Historia 2 validó en un Android real los accesos por Google y Data
 consulta de `/me`, la restauración después de cerrar completamente la app, el logout, la reapertura
 sin restaurar la sesión cerrada y un nuevo login. La revocación remota del proveedor continúa siendo
 best effort; el cierre local y la limpieza de credenciales no dependen de ella.
+
+## Households autenticados
+
+Historia 3 agrega tres rutas protegidas por el mismo Bearer access token de Auth0:
+
+- `GET /api/v1/households`: lista solo memberships `Active` del `User` interno autenticado;
+- `POST /api/v1/households`: recibe únicamente `name` y crea atómicamente el Household junto con un
+  Owner `Active`;
+- `GET /api/v1/households/{householdId}`: devuelve el perfil mínimo solo después de resolver una
+  membership `Active` del actor.
+
+Un `householdId` de la URL es contexto solicitado, nunca autorización. El servidor vuelve a
+comprobar `User + Household + Active HouseholdMembership` en cada consulta; hogares inexistentes,
+ajenos e inactivos producen la misma respuesta pública `404`. No existe `X-Household-Id`, un hogar
+activo guardado en sesión ni confianza en `userId`, `ownerId`, roles o subjects enviados por el
+cliente.
+
+Después de `/me`, el development build muestra los hogares autorizados, permite crear y seleccionar
+uno, y revalida cualquier selección persistida contra `GET /households`. Solo el UUID opaco de esa
+preferencia UX se guarda en AsyncStorage, separado por `User`; no es secreto ni prueba de acceso.
+Los tokens continúan exclusivamente en Credentials Manager sobre Keychain/Keystore. Logout cancela
+requests y elimina de memoria la lista y el hogar seleccionado antes de mostrar el login.
+
+Para probarlo, inicia PostgreSQL, API y Metro como en la sección anterior, abre el development build,
+inicia/restaura sesión y crea un nombre ficticio. Cierra completamente la app, vuelve a abrirla y
+comprueba que la lista y una selección aún autorizada regresan. Crea un segundo hogar y cambia entre
+ambos; finalmente cierra sesión y confirma que la lista deja de verse. Agregar AsyncStorage introduce
+un módulo nativo, por lo que un development build creado antes de Historia 3 debe recompilarse e
+instalarse una vez con `pnpm --filter @copiloto/mobile android:build:cloud`.
+
+El `POST` evita dobles envíos desde el coordinador móvil, pero aún no define idempotencia general del
+servidor; dos creaciones legítimas, incluso con el mismo nombre, producen dos Households distintos.
+La idempotencia financiera pertenece a ADR-008 y no se adelantó aquí.
+
+## Invitaciones dirigidas al Household
+
+Historia 4 agrega cinco rutas autenticadas:
+
+- `POST /api/v1/households/{householdId}/invitations`: el Owner crea una invitación dirigida;
+- `GET /api/v1/households/{householdId}/invitations`: el Owner consulta metadata segura;
+- `POST /api/v1/households/{householdId}/invitations/{invitationId}/revoke`: el Owner revoca una
+  invitación pendiente;
+- `POST /api/v1/invitations/accept`: otro `User` autenticado acepta enviando el código en el body;
+- `GET /api/v1/households/{householdId}/members`: un integrante activo consulta la proyección mínima
+  de membresías activas.
+
+El código es un secreto opaco de 256 bits codificado en base64url. Se muestra únicamente en la
+respuesta de creación y la app lo conserva solo en memoria hasta compartirlo o descartarlo. La base
+guarda exclusivamente SHA-256, nunca el código original. No se coloca en URLs, deep links,
+AsyncStorage ni SecureStore. La duración inicial es configurable con
+`HOUSEHOLD_INVITATION_TTL_HOURS` y por defecto es de siete días.
+
+La invitación está restringida al correo normalizado indicado por el Owner. Al aceptar, la API toma
+un correo verificado del access token validado; nunca recibe correo, `userId`, `householdId`, rol o
+permiso como autoridad del body. Coincidir por correo no enlaza identidades. La invitación determina
+el Household y siempre crea `Member Active` dentro de la misma transacción que consume el código.
+Un reintento del mismo `User` es seguro; otro `User`, un código vencido/revocado o una membresía
+histórica no activa reciben un error público uniforme.
+
+### Validación manual pendiente en Android
+
+Antes de cerrar Historia 4, usa dos cuentas ficticias con correos verificados:
+
+1. Con User A Owner, crea una invitación para el correo verificado de User B y comparte el código
+   mediante la hoja del sistema.
+2. Cierra sesión, entra como User B, pega el código y acepta. Confirma que el Household aparece y que
+   User B figura como `Member`.
+3. Regresa como User A y confirma que la lista mínima muestra dos integrantes.
+4. Como User B intenta crear una invitación y confirma el rechazo seguro.
+5. Como User A crea y revoca otra invitación; como User B confirma que ese código ya no puede
+   aceptarse.
+
+No uses datos reales en esta validación. Si la aceptación falla aun con el correo correcto, revisa
+primero la Post Login Action descrita arriba y vuelve a iniciar sesión para obtener un access token
+nuevo con los claims verificados.
+
+## Navegación y sistema visual de Fase 2
+
+La experiencia móvil de identidad y hogares usa modo oscuro fijo, tipografía Manrope y navegación
+inferior con tres destinos: `Inicio`, `Hogar` y `Perfil`. `Inicio` resume únicamente la configuración
+no financiera; `Hogar` concentra selección, integrantes e invitaciones; `Perfil` conserva `/me` y el
+cierre seguro de sesión. Crear hogar, invitar y aceptar una invitación viven en rutas modales
+separadas para evitar la pantalla única y el desplazamiento excesivo de la primera versión.
+
+Un `MobileAppProvider` mantiene una sola instancia de los coordinadores de Auth0, Households e
+invitaciones durante la navegación. Los componentes visuales no leen credenciales ni duplican
+reglas de autorización. Las acciones de Owner se muestran solo cuando la membresía autorizada lo
+indica y la API sigue validando cada operación. El código crudo de una invitación permanece en
+memoria, nunca viaja como parámetro de ruta y se elimina al compartir o cerrar el modal.
+
+El tema usa componentes propios pequeños sobre React Native, Expo Router, `expo-linear-gradient`,
+`@expo/vector-icons` y Manrope; no incorpora un framework de UI ni animaciones complejas. La
+integración de módulos visuales nativos requiere generar e instalar un development build nuevo:
+
+```bash
+pnpm --filter @copiloto/mobile android:build:cloud
+```
+
+Después de instalar el APK, ejecuta `pnpm dev:mobile:native`. Expo Web conserva el shell visual,
+pero no reemplaza la validación de Auth0 ni de invitaciones en Android real.
 
 Referencias oficiales verificadas el 24 de agosto de 2026: [Auth0 con
 Expo](https://auth0.com/docs/quickstart/native/react-native-expo), [SDK React Native de
@@ -430,8 +542,14 @@ Antes de modificar el proyecto:
   generado permanezca actualizado.
 - `health` no comprueba PostgreSQL por diseño; usa `readiness` para esa señal.
 - La estrategia local `prisma dev` es únicamente para desarrollo; producción aún no está diseñada.
+- La API todavía no tiene infraestructura general de rate limiting. La aceptación de invitaciones
+  mitiga enumeración con 256 bits de entropía, input de longitud fija, errores uniformes y fail
+  closed; debe añadirse una política operativa antes de exponer el servicio públicamente.
+- La auditoría de Historia 4 cubre eventos exitosos de invitación. La correlación y auditoría general
+  de intentos fallidos continúan como parte del gate de observabilidad de ADR-019.
 
-## Próxima historia recomendada
+## Próximo paso recomendado
 
-Historia 3: conectar el `User` autenticado con la creación y consulta de su hogar individual,
-aplicando ADR-006 y sin implementar todavía invitaciones.
+Completar la validación manual de Historia 4 con dos usuarios Android. Después corresponde una
+historia adicional de Fase 2 para visibilidad de recursos personales/compartidos y cierre de los
+criterios de aislamiento; no debe iniciarse Fase 3 todavía.

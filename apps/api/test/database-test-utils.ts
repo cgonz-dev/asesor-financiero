@@ -49,6 +49,8 @@ export function createIntegrationPrisma(): PrismaService {
 }
 
 export async function cleanStoryOneTables(prisma: PrismaService): Promise<void> {
+  await prisma.auditEvent.deleteMany();
+  await prisma.householdInvitation.deleteMany();
   await prisma.householdMembership.deleteMany();
   await prisma.externalIdentity.deleteMany();
   await prisma.household.deleteMany();

@@ -1,5 +1,8 @@
 import { DomainValidationError } from './errors';
 
+export const MAX_HOUSEHOLD_NAME_LENGTH = 100;
+export const MAX_INVITATION_TARGET_EMAIL_LENGTH = 320;
+
 export const HouseholdRole = {
   Owner: 'owner',
   Member: 'member',
@@ -30,6 +33,10 @@ export function householdName(value: string): string {
     throw new DomainValidationError('Household name must not be empty.');
   }
 
+  if (normalized.length > MAX_HOUSEHOLD_NAME_LENGTH) {
+    throw new DomainValidationError('Household name must not exceed 100 characters.');
+  }
+
   return normalized;
 }
 
@@ -43,4 +50,30 @@ export function initialOwnerMembership(userId: string): InitialOwnerMembership {
     role: HouseholdRole.Owner,
     status: HouseholdMembershipStatus.Active,
   };
+}
+
+export function invitationTargetEmail(value: string): string {
+  const normalized = value.trim().toLowerCase();
+
+  if (
+    normalized.length === 0 ||
+    normalized.length > MAX_INVITATION_TARGET_EMAIL_LENGTH ||
+    !/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(normalized)
+  ) {
+    throw new DomainValidationError('Invitation target email is invalid.');
+  }
+
+  return normalized;
+}
+
+export function invitationEmailMatches(
+  targetEmail: string,
+  authenticatedEmail: string | undefined,
+  emailVerified: boolean | undefined,
+): boolean {
+  return (
+    emailVerified === true &&
+    authenticatedEmail !== undefined &&
+    invitationTargetEmail(authenticatedEmail) === invitationTargetEmail(targetEmail)
+  );
 }

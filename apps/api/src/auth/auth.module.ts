@@ -1,6 +1,7 @@
 import { Module, type DynamicModule } from '@nestjs/common';
 
 import { IdentityModule } from '../identity/identity.module';
+import { ACCESS_TOKEN_VERIFIER } from './application/access-token-verifier';
 import type { AuthConfiguration } from './config/auth-configuration';
 import { AuthenticationGuard } from './http/authentication.guard';
 import { MeController } from './http/me.controller';
@@ -20,6 +21,7 @@ export class AuthModule {
   static register(options: AuthModuleOptions = {}): DynamicModule {
     return {
       module: AuthModule,
+      global: true,
       imports: [IdentityModule],
       controllers: [MeController],
       providers: [
@@ -35,6 +37,7 @@ export class AuthModule {
         JOSE_ACCESS_TOKEN_VERIFIER_PROVIDER,
         AuthenticationGuard,
       ],
+      exports: [ACCESS_TOKEN_VERIFIER, AuthenticationGuard, IdentityModule],
     };
   }
 }

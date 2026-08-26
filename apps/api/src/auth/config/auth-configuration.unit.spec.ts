@@ -37,6 +37,8 @@ describe('authConfigurationFromEnvironment', () => {
 
     expect(authConfigurationFromEnvironment()).toEqual({
       audience: 'https://api.example.test',
+      emailClaim: 'https://api.example.test/email',
+      emailVerifiedClaim: 'https://api.example.test/email_verified',
       issuer: 'https://tenant.example.test/',
       jwksUrl: new URL('https://tenant.example.test/.well-known/jwks.json'),
     });

@@ -137,4 +137,23 @@ export class PrismaHouseholdRepository implements HouseholdRepository {
 
     return membership === null ? null : toMembershipRecord(membership);
   }
+
+  async findActiveForUserAndHousehold(scope: ActiveMembershipScope): Promise<UserHousehold | null> {
+    const membership = await this.prisma.householdMembership.findFirst({
+      where: {
+        householdId: scope.householdId,
+        userId: scope.userId,
+        status: PrismaMembershipStatus.Active,
+        user: { status: PrismaUserStatus.Active },
+      },
+      include: { household: true },
+    });
+
+    return membership === null
+      ? null
+      : {
+          household: toHouseholdRecord(membership.household),
+          membership: toMembershipRecord(membership),
+        };
+  }
 }

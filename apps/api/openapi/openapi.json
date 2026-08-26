@@ -1,6 +1,66 @@
 {
   "components": {
     "schemas": {
+      "AcceptHouseholdInvitationRequestDto": {
+        "additionalProperties": false,
+        "properties": {
+          "invitationToken": {
+            "description": "Single-use opaque invitation secret submitted only in a POST body.",
+            "maxLength": 43,
+            "minLength": 43,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invitationToken"
+        ],
+        "type": "object"
+      },
+      "AcceptHouseholdInvitationResponseDto": {
+        "additionalProperties": false,
+        "properties": {
+          "household": {
+            "additionalProperties": false,
+            "properties": {
+              "id": {
+                "description": "Opaque Household identifier.",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string"
+              },
+              "membershipStatus": {
+                "const": "active",
+                "type": "string"
+              },
+              "name": {
+                "description": "Human-readable Household name.",
+                "maxLength": 100,
+                "minLength": 1,
+                "type": "string"
+              },
+              "role": {
+                "enum": [
+                  "owner",
+                  "member"
+                ],
+                "type": "string"
+              }
+            },
+            "required": [
+              "id",
+              "membershipStatus",
+              "name",
+              "role"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "household"
+        ],
+        "type": "object"
+      },
       "AuthenticationErrorDto": {
         "additionalProperties": false,
         "properties": {
@@ -20,6 +80,98 @@
         "required": [
           "code",
           "message"
+        ],
+        "type": "object"
+      },
+      "CreateHouseholdInvitationRequestDto": {
+        "additionalProperties": false,
+        "properties": {
+          "targetEmail": {
+            "description": "Normalized delivery restriction; it is not a User identifier.",
+            "format": "email",
+            "maxLength": 320,
+            "pattern": "^(?!\\.)(?!.*\\.\\.)([A-Za-z0-9_'+\\-\\.]*)[A-Za-z0-9_+-]@([A-Za-z0-9][A-Za-z0-9\\-]*\\.)+[A-Za-z]{2,}$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "targetEmail"
+        ],
+        "type": "object"
+      },
+      "CreateHouseholdInvitationResponseDto": {
+        "additionalProperties": false,
+        "properties": {
+          "invitation": {
+            "additionalProperties": false,
+            "properties": {
+              "createdAt": {
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                "type": "string"
+              },
+              "expiresAt": {
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                "type": "string"
+              },
+              "id": {
+                "description": "Opaque Household invitation identifier; it is not the invitation secret.",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string"
+              },
+              "status": {
+                "enum": [
+                  "pending",
+                  "expired",
+                  "revoked",
+                  "accepted"
+                ],
+                "type": "string"
+              },
+              "targetEmailHint": {
+                "description": "Redacted delivery hint visible only to the authorized Owner.",
+                "maxLength": 320,
+                "minLength": 3,
+                "type": "string"
+              }
+            },
+            "required": [
+              "createdAt",
+              "expiresAt",
+              "id",
+              "status",
+              "targetEmailHint"
+            ],
+            "type": "object"
+          },
+          "invitationToken": {
+            "description": "Single-use opaque invitation secret submitted only in a POST body.",
+            "maxLength": 43,
+            "minLength": 43,
+            "pattern": "^[A-Za-z0-9_-]+$",
+            "type": "string"
+          }
+        },
+        "required": [
+          "invitation",
+          "invitationToken"
+        ],
+        "type": "object"
+      },
+      "CreateHouseholdRequestDto": {
+        "additionalProperties": false,
+        "properties": {
+          "name": {
+            "description": "Human-readable Household name.",
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "name"
         ],
         "type": "object"
       },
@@ -46,6 +198,200 @@
           "status",
           "service",
           "version"
+        ],
+        "type": "object"
+      },
+      "HouseholdDetailDto": {
+        "additionalProperties": false,
+        "properties": {
+          "id": {
+            "description": "Opaque Household identifier.",
+            "format": "uuid",
+            "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+            "type": "string"
+          },
+          "membershipStatus": {
+            "const": "active",
+            "type": "string"
+          },
+          "name": {
+            "description": "Human-readable Household name.",
+            "maxLength": 100,
+            "minLength": 1,
+            "type": "string"
+          },
+          "role": {
+            "enum": [
+              "owner",
+              "member"
+            ],
+            "type": "string"
+          }
+        },
+        "required": [
+          "id",
+          "membershipStatus",
+          "name",
+          "role"
+        ],
+        "type": "object"
+      },
+      "HouseholdErrorDto": {
+        "additionalProperties": false,
+        "properties": {
+          "code": {
+            "enum": [
+              "HOUSEHOLD_FORBIDDEN",
+              "HOUSEHOLD_INVITATION_NOT_FOUND",
+              "HOUSEHOLD_INVITATION_UNAVAILABLE",
+              "HOUSEHOLD_NOT_FOUND",
+              "HOUSEHOLD_VALIDATION_FAILED"
+            ],
+            "type": "string"
+          },
+          "message": {
+            "description": "Safe, localizable public message.",
+            "minLength": 1,
+            "type": "string"
+          }
+        },
+        "required": [
+          "code",
+          "message"
+        ],
+        "type": "object"
+      },
+      "ListHouseholdInvitationsResponseDto": {
+        "additionalProperties": false,
+        "properties": {
+          "invitations": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "createdAt": {
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                  "type": "string"
+                },
+                "expiresAt": {
+                  "format": "date-time",
+                  "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                  "type": "string"
+                },
+                "id": {
+                  "description": "Opaque Household invitation identifier; it is not the invitation secret.",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "type": "string"
+                },
+                "status": {
+                  "enum": [
+                    "pending",
+                    "expired",
+                    "revoked",
+                    "accepted"
+                  ],
+                  "type": "string"
+                },
+                "targetEmailHint": {
+                  "description": "Redacted delivery hint visible only to the authorized Owner.",
+                  "maxLength": 320,
+                  "minLength": 3,
+                  "type": "string"
+                }
+              },
+              "required": [
+                "createdAt",
+                "expiresAt",
+                "id",
+                "status",
+                "targetEmailHint"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "invitations"
+        ],
+        "type": "object"
+      },
+      "ListHouseholdMembersResponseDto": {
+        "additionalProperties": false,
+        "properties": {
+          "members": {
+            "items": {
+              "additionalProperties": false,
+              "properties": {
+                "isCurrentUser": {
+                  "type": "boolean"
+                },
+                "role": {
+                  "enum": [
+                    "owner",
+                    "member"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "isCurrentUser",
+                "role"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "members"
+        ],
+        "type": "object"
+      },
+      "ListHouseholdsResponseDto": {
+        "additionalProperties": false,
+        "properties": {
+          "households": {
+            "items": {
+              "properties": {
+                "id": {
+                  "description": "Opaque Household identifier.",
+                  "format": "uuid",
+                  "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                  "type": "string"
+                },
+                "membershipStatus": {
+                  "const": "active",
+                  "type": "string"
+                },
+                "name": {
+                  "description": "Human-readable Household name.",
+                  "maxLength": 100,
+                  "minLength": 1,
+                  "type": "string"
+                },
+                "role": {
+                  "enum": [
+                    "owner",
+                    "member"
+                  ],
+                  "type": "string"
+                }
+              },
+              "required": [
+                "id",
+                "membershipStatus",
+                "name",
+                "role"
+              ],
+              "type": "object"
+            },
+            "type": "array"
+          }
+        },
+        "required": [
+          "households"
         ],
         "type": "object"
       },
@@ -95,6 +441,59 @@
           "service"
         ],
         "type": "object"
+      },
+      "RevokeHouseholdInvitationResponseDto": {
+        "additionalProperties": false,
+        "properties": {
+          "invitation": {
+            "additionalProperties": false,
+            "properties": {
+              "createdAt": {
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                "type": "string"
+              },
+              "expiresAt": {
+                "format": "date-time",
+                "pattern": "^(?:(?:\\d\\d[2468][048]|\\d\\d[13579][26]|\\d\\d0[48]|[02468][048]00|[13579][26]00)-02-29|\\d{4}-(?:(?:0[13578]|1[02])-(?:0[1-9]|[12]\\d|3[01])|(?:0[469]|11)-(?:0[1-9]|[12]\\d|30)|(?:02)-(?:0[1-9]|1\\d|2[0-8])))T(?:(?:[01]\\d|2[0-3]):[0-5]\\d(?::[0-5]\\d(?:\\.\\d+)?)?(?:Z|([+-](?:[01]\\d|2[0-3]):[0-5]\\d)))$",
+                "type": "string"
+              },
+              "id": {
+                "description": "Opaque Household invitation identifier; it is not the invitation secret.",
+                "format": "uuid",
+                "pattern": "^([0-9a-fA-F]{8}-[0-9a-fA-F]{4}-[1-8][0-9a-fA-F]{3}-[89abAB][0-9a-fA-F]{3}-[0-9a-fA-F]{12}|00000000-0000-0000-0000-000000000000|ffffffff-ffff-ffff-ffff-ffffffffffff)$",
+                "type": "string"
+              },
+              "status": {
+                "enum": [
+                  "pending",
+                  "expired",
+                  "revoked",
+                  "accepted"
+                ],
+                "type": "string"
+              },
+              "targetEmailHint": {
+                "description": "Redacted delivery hint visible only to the authorized Owner.",
+                "maxLength": 320,
+                "minLength": 3,
+                "type": "string"
+              }
+            },
+            "required": [
+              "createdAt",
+              "expiresAt",
+              "id",
+              "status",
+              "targetEmailHint"
+            ],
+            "type": "object"
+          }
+        },
+        "required": [
+          "invitation"
+        ],
+        "type": "object"
       }
     },
     "securitySchemes": {
@@ -138,6 +537,656 @@
         "summary": "Report API process health",
         "tags": [
           "health"
+        ]
+      }
+    },
+    "/api/v1/households": {
+      "get": {
+        "operationId": "HouseholdsController_list",
+        "parameters": [],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "households": [
+                    {
+                      "id": "22222222-2222-4222-8222-222222222222",
+                      "membershipStatus": "active",
+                      "name": "Hogar de prueba",
+                      "role": "owner"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ListHouseholdsResponseDto"
+                }
+              }
+            },
+            "description": "Only active memberships for the authenticated User are returned."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "AUTHENTICATION_REQUIRED",
+                  "message": "Se requiere una sesión válida."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationErrorDto"
+                }
+              }
+            },
+            "description": "A valid access token for this API is required."
+          }
+        },
+        "security": [
+          {
+            "auth0": []
+          }
+        ],
+        "summary": "List active Households for the authenticated User",
+        "tags": [
+          "households"
+        ]
+      },
+      "post": {
+        "operationId": "HouseholdsController_create",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateHouseholdRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "22222222-2222-4222-8222-222222222222",
+                  "membershipStatus": "active",
+                  "name": "Hogar de prueba",
+                  "role": "owner"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdDetailDto"
+                }
+              }
+            },
+            "description": "The Household and its single initial Owner Active membership were created."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "HOUSEHOLD_VALIDATION_FAILED",
+                  "message": "Revisa los datos del hogar."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdErrorDto"
+                }
+              }
+            },
+            "description": "The request body does not satisfy the shared Household contract."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "AUTHENTICATION_REQUIRED",
+                  "message": "Se requiere una sesión válida."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationErrorDto"
+                }
+              }
+            },
+            "description": "A valid access token for this API is required."
+          }
+        },
+        "security": [
+          {
+            "auth0": []
+          }
+        ],
+        "summary": "Create a Household with the authenticated User as Owner Active",
+        "tags": [
+          "households"
+        ]
+      }
+    },
+    "/api/v1/households/{householdId}": {
+      "get": {
+        "operationId": "HouseholdsController_get",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "householdId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "id": "22222222-2222-4222-8222-222222222222",
+                  "membershipStatus": "active",
+                  "name": "Hogar de prueba",
+                  "role": "owner"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdDetailDto"
+                }
+              }
+            },
+            "description": "The authenticated User has an active membership in the Household."
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "AUTHENTICATION_REQUIRED",
+                  "message": "Se requiere una sesión válida."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationErrorDto"
+                }
+              }
+            },
+            "description": "A valid access token for this API is required."
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "HOUSEHOLD_NOT_FOUND",
+                  "message": "El hogar no existe o no está disponible."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdErrorDto"
+                }
+              }
+            },
+            "description": "The Household does not exist or is not visible to the authenticated User."
+          }
+        },
+        "security": [
+          {
+            "auth0": []
+          }
+        ],
+        "summary": "Get an authorized Household basic profile",
+        "tags": [
+          "households"
+        ]
+      }
+    },
+    "/api/v1/households/{householdId}/invitations": {
+      "get": {
+        "operationId": "HouseholdInvitationsController_list",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "householdId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "invitations": [
+                    {
+                      "createdAt": "2026-08-25T18:00:00.000Z",
+                      "expiresAt": "2026-09-01T18:00:00.000Z",
+                      "id": "33333333-3333-4333-8333-333333333333",
+                      "status": "pending",
+                      "targetEmailHint": "p***@example.test"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ListHouseholdInvitationsResponseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "AUTHENTICATION_REQUIRED",
+                  "message": "Se requiere una sesión válida."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationErrorDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "HOUSEHOLD_FORBIDDEN",
+                  "message": "No tienes permiso para realizar esta acción en el hogar."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdErrorDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "HOUSEHOLD_NOT_FOUND",
+                  "message": "El hogar no existe o no está disponible."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdErrorDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "auth0": []
+          }
+        ],
+        "summary": "List invitation metadata as the active Owner",
+        "tags": [
+          "household invitations"
+        ]
+      },
+      "post": {
+        "operationId": "HouseholdInvitationsController_create",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "householdId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/CreateHouseholdInvitationRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "201": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "invitation": {
+                    "createdAt": "2026-08-25T18:00:00.000Z",
+                    "expiresAt": "2026-09-01T18:00:00.000Z",
+                    "id": "33333333-3333-4333-8333-333333333333",
+                    "status": "pending",
+                    "targetEmailHint": "p***@example.test"
+                  },
+                  "invitationToken": "0123456789abcdefghijklmnopqrstuvwxyz_-ABCDE"
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/CreateHouseholdInvitationResponseDto"
+                }
+              }
+            },
+            "description": "The raw invitation token is returned by this response only once."
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "HOUSEHOLD_VALIDATION_FAILED",
+                  "message": "Revisa los datos del hogar."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdErrorDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "AUTHENTICATION_REQUIRED",
+                  "message": "Se requiere una sesión válida."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationErrorDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "HOUSEHOLD_FORBIDDEN",
+                  "message": "No tienes permiso para realizar esta acción en el hogar."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdErrorDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "HOUSEHOLD_NOT_FOUND",
+                  "message": "El hogar no existe o no está disponible."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdErrorDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "auth0": []
+          }
+        ],
+        "summary": "Create a directed single-use invitation as the active Owner",
+        "tags": [
+          "household invitations"
+        ]
+      }
+    },
+    "/api/v1/households/{householdId}/invitations/{invitationId}/revoke": {
+      "post": {
+        "operationId": "HouseholdInvitationsController_revoke",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "householdId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          },
+          {
+            "in": "path",
+            "name": "invitationId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/RevokeHouseholdInvitationResponseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "AUTHENTICATION_REQUIRED",
+                  "message": "Se requiere una sesión válida."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationErrorDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "403": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "HOUSEHOLD_FORBIDDEN",
+                  "message": "No tienes permiso para realizar esta acción en el hogar."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdErrorDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "HOUSEHOLD_INVITATION_NOT_FOUND",
+                  "message": "La invitación no existe o no está disponible."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdErrorDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "HOUSEHOLD_INVITATION_UNAVAILABLE",
+                  "message": "La invitación no es válida o ya no está disponible."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdErrorDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "auth0": []
+          }
+        ],
+        "summary": "Revoke a pending invitation as the active Owner",
+        "tags": [
+          "household invitations"
+        ]
+      }
+    },
+    "/api/v1/households/{householdId}/members": {
+      "get": {
+        "operationId": "HouseholdInvitationsController_members",
+        "parameters": [
+          {
+            "in": "path",
+            "name": "householdId",
+            "required": true,
+            "schema": {
+              "format": "uuid",
+              "type": "string"
+            }
+          }
+        ],
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "members": [
+                    {
+                      "isCurrentUser": true,
+                      "role": "owner"
+                    },
+                    {
+                      "isCurrentUser": false,
+                      "role": "member"
+                    }
+                  ]
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/ListHouseholdMembersResponseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "AUTHENTICATION_REQUIRED",
+                  "message": "Se requiere una sesión válida."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationErrorDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "404": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "HOUSEHOLD_NOT_FOUND",
+                  "message": "El hogar no existe o no está disponible."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdErrorDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "auth0": []
+          }
+        ],
+        "summary": "List minimal active Household membership projections",
+        "tags": [
+          "household invitations"
+        ]
+      }
+    },
+    "/api/v1/invitations/accept": {
+      "post": {
+        "operationId": "HouseholdInvitationsController_accept",
+        "parameters": [],
+        "requestBody": {
+          "content": {
+            "application/json": {
+              "schema": {
+                "$ref": "#/components/schemas/AcceptHouseholdInvitationRequestDto"
+              }
+            }
+          },
+          "required": true
+        },
+        "responses": {
+          "200": {
+            "content": {
+              "application/json": {
+                "schema": {
+                  "$ref": "#/components/schemas/AcceptHouseholdInvitationResponseDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "400": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "HOUSEHOLD_VALIDATION_FAILED",
+                  "message": "Revisa los datos del hogar."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdErrorDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "401": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "AUTHENTICATION_REQUIRED",
+                  "message": "Se requiere una sesión válida."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/AuthenticationErrorDto"
+                }
+              }
+            },
+            "description": ""
+          },
+          "409": {
+            "content": {
+              "application/json": {
+                "example": {
+                  "code": "HOUSEHOLD_INVITATION_UNAVAILABLE",
+                  "message": "La invitación no es válida o ya no está disponible."
+                },
+                "schema": {
+                  "$ref": "#/components/schemas/HouseholdErrorDto"
+                }
+              }
+            },
+            "description": ""
+          }
+        },
+        "security": [
+          {
+            "auth0": []
+          }
+        ],
+        "summary": "Accept an invitation as the authenticated User",
+        "tags": [
+          "household invitations"
         ]
       }
     },

@@ -5,8 +5,7 @@
     "version": "0.1.0",
     "orientation": "portrait",
     "scheme": "copilotofinanciero",
-    "userInterfaceStyle": "automatic",
-    "newArchEnabled": true,
+    "userInterfaceStyle": "dark",
     "web": {
       "bundler": "metro",
       "output": "static"

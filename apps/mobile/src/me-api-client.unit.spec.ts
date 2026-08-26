@@ -13,6 +13,7 @@ function tokenProvider(): TokenProvider & { getAccessToken: ReturnType<typeof vi
     getAccessToken: vi.fn(async ({ forceRefresh = false } = {}) =>
       forceRefresh ? 'refreshed.token.value' : 'initial.token.value',
     ),
+    invalidateSession: vi.fn(async () => undefined),
     registerAuthenticatedRequest: () => () => undefined,
   };
 }
@@ -86,5 +87,6 @@ describe('MeApiClient', () => {
       status: 401,
     });
     expect(transport).toHaveBeenCalledTimes(2);
+    expect(provider.invalidateSession).toHaveBeenCalledOnce();
   });
 });

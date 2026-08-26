@@ -1,11 +1,10 @@
-import {
-  MeResponseClientSchema,
-  PublicAuthenticationErrorSchema,
-  type MeResponse,
-} from '@copiloto/contracts';
+import { MeResponseClientSchema, type MeResponse } from '@copiloto/contracts';
 
-import type { TokenProvider } from './auth/token-provider';
-import type { HttpTransport } from './health-api-client';
+import {
+  AuthenticatedApiClient,
+  AuthenticatedApiClientError,
+  type AuthenticatedApiClientOptions,
+} from './authenticated-api-client';
 
 export type MeApiClientErrorCode =
   'cancelled' | 'http' | 'invalidResponse' | 'network' | 'timeout' | 'unauthorized';
@@ -26,114 +25,39 @@ export class MeApiClientError extends Error {
   }
 }
 
-interface MeApiClientOptions {
-  baseUrl: string;
-  timeoutMs?: number;
-  tokenProvider: TokenProvider;
-  transport?: HttpTransport;
-}
+type MeApiClientOptions = AuthenticatedApiClientOptions;
 
 interface GetMeOptions {
   signal?: AbortSignal;
 }
 
 export class MeApiClient {
-  private readonly baseUrl: string;
-  private readonly timeoutMs: number;
-  private readonly tokenProvider: TokenProvider;
-  private readonly transport: HttpTransport;
+  private readonly authenticatedApi: AuthenticatedApiClient;
 
   constructor(options: MeApiClientOptions) {
-    this.baseUrl = options.baseUrl.replace(/\/+$/, '');
-    this.timeoutMs = options.timeoutMs ?? 5_000;
-    this.tokenProvider = options.tokenProvider;
-    this.transport = options.transport ?? globalThis.fetch.bind(globalThis);
+    this.authenticatedApi = new AuthenticatedApiClient(options);
   }
 
   async getMe(options: GetMeOptions = {}): Promise<MeResponse> {
-    let forceRefresh = false;
-
-    for (let attempt = 0; attempt < 2; attempt += 1) {
-      const response = await this.send(forceRefresh, options.signal);
-
-      if (response.status === 401 && attempt === 0) {
-        await this.consumeSafeAuthenticationError(response);
-        forceRefresh = true;
-        continue;
-      }
-
-      if (response.status === 401) {
-        await this.consumeSafeAuthenticationError(response);
-        throw new MeApiClientError(
-          'unauthorized',
-          'La sesión no es válida o ya no está disponible.',
-          { status: response.status },
-        );
-      }
-
-      if (!response.ok) {
-        throw new MeApiClientError('http', `La API respondió con HTTP ${response.status}.`, {
-          status: response.status,
-        });
-      }
-
-      return this.parseResponse(response);
-    }
-
-    throw new MeApiClientError('unauthorized', 'La sesión no es válida.');
-  }
-
-  private async send(forceRefresh: boolean, externalSignal?: AbortSignal): Promise<Response> {
-    const controller = new AbortController();
-    const unregister = this.tokenProvider.registerAuthenticatedRequest(controller);
-    let didTimeout = false;
-    const forwardCancellation = () => controller.abort(externalSignal?.reason);
-    const timeout = setTimeout(() => {
-      didTimeout = true;
-      controller.abort();
-    }, this.timeoutMs);
-
-    if (externalSignal?.aborted) {
-      clearTimeout(timeout);
-      unregister();
-      throw new MeApiClientError('cancelled', 'La consulta fue cancelada.');
-    }
-
-    externalSignal?.addEventListener('abort', forwardCancellation, { once: true });
-
     try {
-      const token = await this.tokenProvider.getAccessToken({ forceRefresh });
+      const response = await this.authenticatedApi.request(
+        '/api/v1/me',
+        options.signal === undefined ? {} : { signal: options.signal },
+      );
+      return this.parseResponse(response);
+    } catch (error: unknown) {
+      if (error instanceof MeApiClientError) {
+        throw error;
+      }
 
-      try {
-        return await this.transport(`${this.baseUrl}/api/v1/me`, {
-          headers: {
-            accept: 'application/json',
-            authorization: `Bearer ${token}`,
-          },
-          method: 'GET',
-          signal: controller.signal,
-        });
-      } catch (error: unknown) {
-        if (didTimeout) {
-          throw new MeApiClientError('timeout', 'La API tardó demasiado en responder.', {
-            cause: error,
-          });
-        }
-
-        if (externalSignal?.aborted || controller.signal.aborted) {
-          throw new MeApiClientError('cancelled', 'La consulta fue cancelada.', {
-            cause: error,
-          });
-        }
-
-        throw new MeApiClientError('network', 'No fue posible conectar con la API.', {
+      if (error instanceof AuthenticatedApiClientError) {
+        throw new MeApiClientError(error.code, error.message, {
           cause: error,
+          ...(error.status === undefined ? {} : { status: error.status }),
         });
       }
-    } finally {
-      clearTimeout(timeout);
-      externalSignal?.removeEventListener('abort', forwardCancellation);
-      unregister();
+
+      throw error;
     }
   }
 
@@ -157,13 +81,5 @@ export class MeApiClient {
     }
 
     return parsed.data;
-  }
-
-  private async consumeSafeAuthenticationError(response: Response): Promise<void> {
-    try {
-      PublicAuthenticationErrorSchema.safeParse(await response.json());
-    } catch {
-      // A malformed 401 remains a generic public authentication failure.
-    }
   }
 }

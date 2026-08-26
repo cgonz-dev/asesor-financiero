@@ -46,6 +46,24 @@ describe('JoseAccessTokenVerifier', () => {
     });
   });
 
+  it('reads only the configured verified-email claims for directed invitations', async () => {
+    const verifier = new JoseAccessTokenVerifier(authServer.configuration(), TEST_OPTIONS);
+
+    await expect(
+      verifier.verify(
+        await authServer.sign({ email: 'partner@example.test', emailVerified: true }),
+      ),
+    ).resolves.toEqual({
+      identity: {
+        email: 'partner@example.test',
+        emailVerified: true,
+        issuer: authServer.issuer,
+        provider: 'auth0',
+        subject: 'auth0|synthetic-user',
+      },
+    });
+  });
+
   it.each([
     ['expired', () => authServer.sign({ expiresAt: Math.floor(Date.now() / 1_000) - 20 })],
     ['not active yet', () => authServer.sign({ notBefore: Math.floor(Date.now() / 1_000) + 20 })],

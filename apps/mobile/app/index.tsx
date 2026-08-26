@@ -1,216 +1,131 @@
-import { useEffect, useMemo, useState } from 'react';
-import { ActivityIndicator, Pressable, SafeAreaView, StyleSheet, Text, View } from 'react-native';
-import { StatusBar } from 'expo-status-bar';
+import { Redirect } from 'expo-router';
+import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
-import type { SessionSnapshot } from '../src/auth/auth0-session-coordinator';
-import { createMobileSessionRuntime } from '../src/auth/session-runtime';
+import { useMobileApp } from '../src/application/mobile-app-provider';
+import { getSessionPresentation } from '../src/application/mobile-app-view-model';
+import { AppButton, AppCard, AppScreen, BrandMark, FeedbackCard } from '../src/ui/components';
+import { colors, fontFamilies, spacing } from '../src/ui/theme';
 
-export default function AuthenticationScreen() {
-  const runtime = useMemo(() => createMobileSessionRuntime(), []);
-  const [snapshot, setSnapshot] = useState<SessionSnapshot>(() =>
-    runtime.coordinator === undefined
-      ? {
-          message: runtime.configurationError ?? 'La autenticación no está disponible.',
-          status: 'error',
-        }
-      : runtime.coordinator.currentSnapshot(),
-  );
+export default function SessionGateScreen() {
+  const { authenticationAvailable, login, session } = useMobileApp();
+  const presentation = getSessionPresentation(session.status, session.message);
 
-  useEffect(() => {
-    if (runtime.coordinator === undefined || runtime.client === undefined) {
-      return;
-    }
+  if (session.status === 'authenticated') {
+    return <Redirect href="/(tabs)" />;
+  }
 
-    const coordinator = runtime.coordinator;
-    const client = runtime.client;
-    const unsubscribe = coordinator.subscribe(setSnapshot);
-    void coordinator.restore(() => client.getMe());
-
-    return unsubscribe;
-  }, [runtime]);
-
-  const login = async () => {
-    if (runtime.coordinator !== undefined && runtime.client !== undefined) {
-      await runtime.coordinator.login(() => runtime.client!.getMe());
-    }
-  };
-
-  const logout = async () => {
-    await runtime.coordinator?.logout();
-  };
-
-  const refreshProfile = async () => {
-    if (runtime.coordinator !== undefined && runtime.client !== undefined) {
-      await runtime.coordinator.refreshProfile(() => runtime.client!.getMe());
-    }
-  };
-
-  const isBusy = snapshot.status === 'authenticating' || snapshot.status === 'restoring';
-  const isRefreshingProfile = snapshot.profileRefreshStatus === 'refreshing';
-
-  return (
-    <SafeAreaView style={styles.safeArea}>
-      <StatusBar style="dark" />
-      <View style={styles.container}>
-        <Text style={styles.eyebrow}>FASE 2 · IDENTIDAD</Text>
-        <Text style={styles.title}>Copiloto Financiero</Text>
-        <Text style={styles.description}>
-          Acceso seguro para continuar con la configuración inicial. No hay funciones financieras en
-          esta pantalla.
-        </Text>
-
-        <View accessibilityLiveRegion="polite" style={styles.statusCard}>
-          <Text style={styles.statusLabel}>Estado de sesión</Text>
-          {isBusy ? <ActivityIndicator color="#1d4f3a" /> : null}
-          <Text style={styles.statusValue}>
-            {snapshot.status === 'restoring' && 'Restaurando sesión…'}
-            {snapshot.status === 'authenticating' && 'Abriendo Auth0…'}
-            {snapshot.status === 'unauthenticated' && 'Inicia sesión para continuar.'}
-            {snapshot.status === 'authenticated' && 'Sesión activa.'}
-            {snapshot.status === 'error' && (snapshot.message ?? 'No pudimos validar la sesión.')}
-          </Text>
-          {snapshot.profile === undefined ? null : (
-            <Text selectable style={styles.identifier}>
-              Usuario: {snapshot.profile.id}
-            </Text>
-          )}
-          {snapshot.profileRefreshStatus === 'succeeded' ? (
-            <Text style={styles.profileFeedback}>Perfil consultado correctamente.</Text>
-          ) : null}
+  if (session.status === 'restoring') {
+    return (
+      <AppScreen contentStyle={styles.centered} safeBottom scroll={false}>
+        <BrandMark size={62} />
+        <ActivityIndicator color={colors.accentCyan} size="large" />
+        <View style={styles.centeredCopy}>
+          <Text style={styles.loadingTitle}>{presentation.title}</Text>
+          <Text style={styles.loadingDescription}>{presentation.description}</Text>
         </View>
+      </AppScreen>
+    );
+  }
 
-        {snapshot.status === 'authenticated' ? (
-          <>
-            <SessionButton
-              disabled={isRefreshingProfile}
-              label={isRefreshingProfile ? 'Consultando…' : 'Consultar mi perfil'}
-              onPress={refreshProfile}
-            />
-            <SessionButton label="Cerrar sesión" onPress={logout} secondary />
-          </>
-        ) : (
-          <SessionButton
-            disabled={runtime.coordinator === undefined || isBusy}
-            label={snapshot.status === 'authenticating' ? 'Iniciando…' : 'Iniciar sesión'}
-            onPress={login}
-          />
-        )}
-      </View>
-    </SafeAreaView>
-  );
-}
+  const authenticating = session.status === 'authenticating';
 
-function SessionButton({
-  disabled = false,
-  label,
-  onPress,
-  secondary = false,
-}: {
-  disabled?: boolean;
-  label: string;
-  onPress: () => Promise<void>;
-  secondary?: boolean;
-}) {
   return (
-    <Pressable
-      accessibilityRole="button"
-      disabled={disabled}
-      onPress={() => void onPress()}
-      style={({ pressed }) => [
-        styles.button,
-        secondary && styles.buttonSecondary,
-        pressed && styles.buttonPressed,
-        disabled && styles.buttonDisabled,
-      ]}
-    >
-      <Text style={[styles.buttonText, secondary && styles.buttonTextSecondary]}>{label}</Text>
-    </Pressable>
+    <AppScreen contentStyle={styles.accessContent} safeBottom>
+      <View style={styles.hero}>
+        <BrandMark size={68} />
+        <View style={styles.heroCopy}>
+          <Text style={styles.eyebrow}>FASE 2 · IDENTIDAD</Text>
+          <Text style={styles.title}>Copiloto Financiero</Text>
+          <Text style={styles.description}>
+            Un espacio seguro para organizar tu hogar. Todavía no hay funciones financieras en esta
+            pantalla.
+          </Text>
+        </View>
+      </View>
+
+      <AppCard style={styles.accessCard}>
+        <FeedbackCard
+          message={presentation.description}
+          title={presentation.title}
+          tone={presentation.tone}
+        />
+        <AppButton
+          disabled={!authenticationAvailable}
+          icon="log-in-outline"
+          label={authenticating ? 'Abriendo acceso seguro…' : 'Iniciar sesión'}
+          loading={authenticating}
+          onPress={login}
+        />
+        {!authenticationAvailable ? (
+          <Text style={styles.developmentNote}>
+            La autenticación real está disponible en un development build de Android o iOS con las
+            variables locales de Auth0 configuradas.
+          </Text>
+        ) : null}
+      </AppCard>
+    </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  safeArea: {
-    backgroundColor: '#f5f1e8',
-    flex: 1,
+  accessCard: {
+    gap: spacing.md,
   },
-  container: {
-    alignItems: 'stretch',
-    flex: 1,
-    gap: 20,
+  accessContent: {
     justifyContent: 'center',
-    marginHorizontal: 'auto',
-    maxWidth: 560,
-    padding: 24,
-    width: '100%',
+    minHeight: '100%',
   },
-  eyebrow: {
-    color: '#5c6b49',
-    fontSize: 12,
-    fontWeight: '700',
-    letterSpacing: 1.5,
+  centered: {
+    alignItems: 'center',
+    justifyContent: 'center',
   },
-  title: {
-    color: '#1d2a23',
-    fontSize: 38,
-    fontWeight: '700',
+  centeredCopy: {
+    alignItems: 'center',
+    gap: spacing.xs,
   },
   description: {
-    color: '#526056',
-    fontSize: 18,
+    color: colors.textMuted,
+    fontFamily: fontFamilies.regular,
+    fontSize: 17,
     lineHeight: 27,
   },
-  statusCard: {
-    backgroundColor: '#e6eee0',
-    borderColor: '#b8c8ae',
-    borderRadius: 16,
-    borderWidth: 1,
-    gap: 10,
-    padding: 20,
+  developmentNote: {
+    color: colors.textSubtle,
+    fontFamily: fontFamilies.regular,
+    fontSize: 12,
+    lineHeight: 18,
+    textAlign: 'center',
   },
-  statusLabel: {
-    color: '#526056',
-    fontSize: 13,
-    fontWeight: '600',
-    textTransform: 'uppercase',
+  eyebrow: {
+    color: colors.accentCyan,
+    fontFamily: fontFamilies.bold,
+    fontSize: 12,
+    letterSpacing: 2,
   },
-  statusValue: {
-    color: '#1d2a23',
-    fontSize: 17,
-    fontWeight: '600',
+  hero: {
+    gap: spacing.lg,
   },
-  identifier: {
-    color: '#526056',
-    fontSize: 13,
+  heroCopy: {
+    gap: spacing.sm,
   },
-  profileFeedback: {
-    color: '#1d4f3a',
+  loadingDescription: {
+    color: colors.textMuted,
+    fontFamily: fontFamilies.regular,
     fontSize: 14,
-    fontWeight: '600',
+    lineHeight: 21,
+    maxWidth: 320,
+    textAlign: 'center',
   },
-  button: {
-    alignItems: 'center',
-    backgroundColor: '#1d4f3a',
-    borderColor: '#1d4f3a',
-    borderRadius: 12,
-    borderWidth: 1,
-    paddingHorizontal: 20,
-    paddingVertical: 15,
+  loadingTitle: {
+    color: colors.text,
+    fontFamily: fontFamilies.semibold,
+    fontSize: 20,
   },
-  buttonSecondary: {
-    backgroundColor: 'transparent',
-  },
-  buttonDisabled: {
-    opacity: 0.55,
-  },
-  buttonPressed: {
-    opacity: 0.8,
-  },
-  buttonText: {
-    color: '#ffffff',
-    fontSize: 16,
-    fontWeight: '700',
-  },
-  buttonTextSecondary: {
-    color: '#1d4f3a',
+  title: {
+    color: colors.text,
+    fontFamily: fontFamilies.bold,
+    fontSize: 42,
+    letterSpacing: -1.8,
+    lineHeight: 49,
   },
 });
