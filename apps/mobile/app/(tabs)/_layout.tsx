@@ -1,7 +1,7 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
 import { Redirect, Tabs } from 'expo-router';
 import { useEffect, useState } from 'react';
-import { Animated, StyleSheet, type ColorValue } from 'react-native';
+import { Animated, Platform, StyleSheet, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
 import { useMobileApp } from '../../src/application/mobile-app-provider';
@@ -9,6 +9,7 @@ import { useReducedMotion } from '../../src/ui/motion';
 import { colors, fontFamilies } from '../../src/ui/theme';
 
 type IconName = React.ComponentProps<typeof Ionicons>['name'];
+const useNativeDriver = Platform.OS !== 'web';
 
 function TabIcon({
   activeIcon,
@@ -37,7 +38,7 @@ function TabIcon({
       mass: 0.55,
       stiffness: 300,
       toValue: focused ? 1 : 0,
-      useNativeDriver: true,
+      useNativeDriver,
     }).start();
   }, [focused, progress, reducedMotion]);
 

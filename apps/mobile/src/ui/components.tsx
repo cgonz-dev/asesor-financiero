@@ -34,7 +34,6 @@ function AmbientGlow({ secondary = false }: { secondary?: boolean }) {
 
   return (
     <Animated.View
-      pointerEvents="none"
       style={[secondary ? styles.ambientGlowSecondary : styles.ambientGlowPrimary, animatedStyle]}
     />
   );
@@ -467,6 +466,7 @@ const styles = StyleSheet.create({
     backgroundColor: colors.glowBlue,
     borderRadius: 180,
     height: 300,
+    pointerEvents: 'none',
     position: 'absolute',
     right: -170,
     top: -130,
@@ -477,6 +477,7 @@ const styles = StyleSheet.create({
     borderRadius: 150,
     height: 250,
     left: -180,
+    pointerEvents: 'none',
     position: 'absolute',
     top: 260,
     width: 250,

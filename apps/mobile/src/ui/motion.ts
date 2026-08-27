@@ -1,5 +1,7 @@
 import { useEffect, useState } from 'react';
-import { AccessibilityInfo, Animated, Easing } from 'react-native';
+import { AccessibilityInfo, Animated, Easing, Platform } from 'react-native';
+
+const useNativeDriver = Platform.OS !== 'web';
 
 export const motionDurations = {
   enter: 460,
@@ -49,7 +51,7 @@ export function useRevealMotion(delay = 0) {
       duration: motionDurations.enter,
       easing: Easing.out(Easing.cubic),
       toValue: 1,
-      useNativeDriver: true,
+      useNativeDriver,
     });
 
     animation.start();
@@ -90,7 +92,7 @@ export function usePressMotion(pressedScale = 0.975) {
       mass: 0.55,
       stiffness: 360,
       toValue: pressed ? pressedScale : 1,
-      useNativeDriver: true,
+      useNativeDriver,
     }).start();
   };
 
@@ -117,13 +119,13 @@ export function useAmbientMotion(reverse = false) {
           duration: 7200,
           easing: Easing.inOut(Easing.sin),
           toValue: 1,
-          useNativeDriver: true,
+          useNativeDriver,
         }),
         Animated.timing(progress, {
           duration: 7200,
           easing: Easing.inOut(Easing.sin),
           toValue: 0,
-          useNativeDriver: true,
+          useNativeDriver,
         }),
       ]),
     );
