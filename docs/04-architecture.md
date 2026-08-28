@@ -9,7 +9,8 @@ y Membership, y readiness. Historia 2 implementa y valida el límite Auth0, sesi
 un development build Android contra un tenant exclusivo de desarrollo. Historia 3 implementa los
 endpoints Household autenticados, el primer resolver/policy de ADR-006 y la experiencia móvil de
 lista, creación y selección, validada en un development build Android. Historia 4 implementa
-invitaciones e incorporación de Member y espera su validación manual con dos usuarios Android.
+invitaciones e incorporación de Member. La prueba manual con una segunda identidad/dispositivo
+permanece como deuda explícita, sin afirmar evidencia inexistente. Historia 5 todavía no se inicia.
 Administración avanzada de integrantes, recursos financieros y RLS permanecen fuera del incremento.
 
 ## Objetivos arquitectónicos
@@ -61,6 +62,9 @@ packages/
 
 docs/
   adr/
+  exec-plans/
+  mobile/
+  project-state.md
 ```
 
 ### Responsabilidad por ubicación
@@ -75,6 +79,9 @@ docs/
 | `packages/eslint-config` | Política de lint reutilizable | Configuración específica de negocio |
 | `packages/typescript-config` | Bases de TypeScript | Código ejecutable de aplicación |
 | `docs/adr` | Registro de decisiones duraderas | Secretos o documentación operacional sensible |
+| `docs/exec-plans` | Trabajo operacional activo y evidencia de planes completados | Decisiones arquitectónicas o copias del roadmap |
+| `docs/mobile` | Fuente de verdad del sistema visual móvil implementado | Reglas de autorización o negocio |
+| `docs/project-state.md` | Snapshot operacional actual | Historial extenso o plan de implementación |
 
 ## Vista de componentes
 
@@ -282,8 +289,9 @@ cliente puede compartir texto por la hoja nativa del sistema, pegar y aceptar el
 Households y mostrar una proyección mínima de integrantes. No existen magic links, correo
 transaccional, roles configurables ni administración avanzada de membresías.
 
-La implementación automática y las pruebas PostgreSQL están listas; Historia 4 permanece abierta
-hasta completar en Android real la validación Owner/User invitado exigida por sus criterios.
+La implementación automática y las pruebas PostgreSQL completaron Historia 4. La validación en
+Android real con una segunda identidad/dispositivo permanece pendiente y debe conservarse en
+`project-state.md` al evaluar el cierre formal de Fase 2.
 
 ## Navegación y sistema visual móvil de Fase 2
 
@@ -424,7 +432,8 @@ artefacto OpenAPI versionado permanezca actualizado. No despliega ni publica art
 | ADR-019 | Observabilidad, auditoría y redacción de datos sensibles | Fase 3; completar antes de beta | Pendiente |
 | ADR-020 | Backups, restauración, RPO/RTO y continuidad | Antes de beta | Pendiente |
 
-ADR-001, ADR-005, ADR-006 y ADR-007 están aceptados. Las Historias 1, 2 y 3 de Fase 2 están
-completadas; Historia 4 tiene implementación automática lista y validación Android pendiente. Esto
+ADR-001, ADR-005, ADR-006 y ADR-007 están aceptados. Las Historias 1 a 4 de Fase 2 están
+completadas; Historia 5 todavía no se ha iniciado. La validación Android con segunda identidad
+permanece como deuda manual explícita. Esto
 no amplía el alcance a administración avanzada de integrantes, RLS ni historias financieras. Los
 demás IDs son reservas de trabajo hasta que exista contexto, alternativas y una decisión revisable.

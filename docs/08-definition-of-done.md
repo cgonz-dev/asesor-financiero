@@ -63,6 +63,11 @@ El workspace deberá exponer desde Fase 1:
 - `test:e2e`;
 - `build`.
 
+Harness 1.0 agrupa estos controles sin retirar sus comandos individuales:
+
+- `pnpm verify`: baseline sin PostgreSQL ni Auth0 real;
+- `pnpm verify:full`: matriz completa con PostgreSQL local/CI configurado.
+
 Antes de finalizar se ejecutan los controles disponibles y relevantes. El reporte indica comando, alcance y resultado. Si un control requerido falla, la historia no está terminada. Si aún no existe por la fase actual, se registra como no disponible y no se inventa evidencia.
 
 ## Pruebas
@@ -238,4 +243,3 @@ Una excepción a la DoD:
 - no viola una regla financiera innegociable;
 - no permite liberar un hallazgo crítico sin tratamiento;
 - queda registrada en el mecanismo de seguimiento vigente.
-

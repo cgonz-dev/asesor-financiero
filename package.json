@@ -31,7 +31,10 @@
     "db:status": "pnpm --filter @copiloto/api exec prisma migrate status",
     "db:studio": "pnpm --filter @copiloto/api exec prisma studio",
     "openapi:generate": "pnpm --filter @copiloto/contracts build && pnpm --filter @copiloto/domain build && pnpm --filter @copiloto/api openapi:generate",
-    "openapi:check": "pnpm --filter @copiloto/contracts build && pnpm --filter @copiloto/domain build && pnpm --filter @copiloto/api openapi:check"
+    "openapi:check": "pnpm --filter @copiloto/contracts build && pnpm --filter @copiloto/domain build && pnpm --filter @copiloto/api openapi:check",
+    "expo:doctor": "node scripts/expo-doctor.mjs",
+    "verify": "node scripts/verify.mjs",
+    "verify:full": "node scripts/verify.mjs --full"
   },
   "devDependencies": {
     "@copiloto/eslint-config": "workspace:*",

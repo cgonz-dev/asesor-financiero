@@ -10,16 +10,18 @@ Toda persona o agente que contribuya debe leer primero:
 
 1. [`../AGENTS.md`](../AGENTS.md): reglas permanentes de trabajo.
 2. Este índice.
-3. El documento del área que va a modificar.
-4. [`05-roadmap.md`](05-roadmap.md): fase e historia activa.
-5. Los ADR aplicables en [`adr/`](adr/README.md).
+3. [`project-state.md`](project-state.md): snapshot operacional vigente.
+4. El `AGENTS.md` y el documento del área que va a modificar.
+5. El único plan aplicable en [`exec-plans/active/`](exec-plans/README.md).
+6. [`05-roadmap.md`](05-roadmap.md) y los ADR aplicables en [`adr/`](adr/README.md).
 
 ## Mapa documental
 
 | Documento | Fuente de verdad para | Cuándo actualizarlo |
 |---|---|---|
 | [`../README.md`](../README.md) | Presentación, estado y punto de entrada | Cuando cambien el estado o la orientación inicial |
-| [`../AGENTS.md`](../AGENTS.md) | Guardarraíles permanentes para agentes | Cuando cambien reglas transversales de trabajo |
+| [`../AGENTS.md`](../AGENTS.md) | Mapa, workflow y guardarraíles globales para agentes | Cuando cambie la forma transversal de trabajo |
+| [`project-state.md`](project-state.md) | Estado real actual, baseline y deuda visible | Después de cada historia o cambio material de estado |
 | [`01-product-vision.md`](01-product-vision.md) | Problema, usuarios, propuesta de valor y resultados | Cuando cambie la dirección del producto |
 | [`02-domain-rules.md`](02-domain-rules.md) | Vocabulario, invariantes, ledger y operaciones | Con cualquier cambio de semántica financiera |
 | [`03-mvp-scope.md`](03-mvp-scope.md) | Dentro/fuera del MVP y supuestos | Cuando se apruebe un cambio de alcance |
@@ -29,6 +31,8 @@ Toda persona o agente que contribuya debe leer primero:
 | [`07-security-and-privacy.md`](07-security-and-privacy.md) | Amenazas, controles y tratamiento de datos | Con cualquier cambio de identidad, acceso o datos |
 | [`08-definition-of-done.md`](08-definition-of-done.md) | Barra de calidad y evidencia de cierre | Cuando cambie el proceso de entrega |
 | [`adr/README.md`](adr/README.md) | Proceso, índice y plantilla de decisiones | Al proponer, aceptar o sustituir decisiones |
+| [`exec-plans/README.md`](exec-plans/README.md) | Trabajo operacional activo/completado | Al planear, iniciar o completar una historia |
+| [`mobile/design-system.md`](mobile/design-system.md) | Sistema visual móvil implementado | Al cambiar tokens, componentes, navegación o movimiento |
 
 ## Jerarquía ante conflictos
 
@@ -36,8 +40,10 @@ Toda persona o agente que contribuya debe leer primero:
 2. Los ADR aceptados prevalecen sobre propuestas antiguas de arquitectura.
 3. [`02-domain-rules.md`](02-domain-rules.md) prevalece para semántica financiera.
 4. [`03-mvp-scope.md`](03-mvp-scope.md) prevalece para alcance aprobado.
-5. [`05-roadmap.md`](05-roadmap.md) determina el orden de ejecución, no redefine dominio o alcance.
-6. Si dos fuentes siguen en conflicto, se detiene la decisión con impacto financiero y se documenta la resolución.
+5. [`05-roadmap.md`](05-roadmap.md) determina orden y dirección; no redefine dominio o alcance.
+6. [`project-state.md`](project-state.md) registra el estado actual y el plan activo concreta el
+   trabajo, sin sustituir fuentes superiores.
+7. Si dos fuentes siguen en conflicto, se detiene la decisión con impacto financiero y se documenta la resolución.
 
 ## Estado de la documentación
 
@@ -45,7 +51,7 @@ Toda persona o agente que contribuya debe leer primero:
 |---|---|---|
 | Visión y alcance | Propuesta fundacional documentada | Validar con usuarios de la pareja piloto |
 | Dominio financiero | Modelo conceptual documentado; no implementado | Resolver ADR de dinero y ledger antes de Fase 3 |
-| Arquitectura | Fase 1 cerrada; Fase 2 abierta; Historias 1, 2 y 3 completadas; Historia 4 en validación Android; navegación y sistema visual de Fase 2 implementados; ADR-001, ADR-005, ADR-006 y ADR-007 aceptados | Completar la validación de invitaciones con dos usuarios sin iniciar funcionalidad financiera |
+| Arquitectura | Fase 1 cerrada; Fase 2 abierta; Historias 1 a 4 completadas; navegación y sistema visual de Fase 2 implementados; ADR-001, ADR-005, ADR-006 y ADR-007 aceptados | Ejecutar únicamente el plan activo de Historia 5; conservar visible la validación manual pendiente |
 | IA | Límites, política y catálogo futuro documentados | Resolver ADR-012 y contratos durante Fase 6 |
 | Seguridad y privacidad | Baseline documentado; Auth0 y límites Household/invitaciones de ADR-006 implementados | Validar invitaciones en Android y ampliar autorización solo mediante una historia aprobada |
 | Roadmap | Vigente | Ejecutar de forma secuencial |
@@ -56,4 +62,5 @@ Toda persona o agente que contribuya debe leer primero:
 - “Debe” indica requisito obligatorio; “puede” indica opción.
 - Una decisión “pendiente de ADR” no se considera cerrada.
 - Los documentos describen comportamiento; los ADR explican por qué se eligió una solución duradera.
+- `project-state.md` es un snapshot, no un historial; los execution plans enlazan contexto sin duplicarlo.
 - Cada cambio funcional debe enlazar historia, criterios de aceptación, pruebas y documentación.

@@ -12,12 +12,12 @@ estructuradas y explicaciones útiles, sin convertir a la IA en fuente de verdad
 - **Fase 1 cerrada:** bootstrap reproducible, health contractual, OpenAPI, cliente móvil mínimo,
   CI inicial y modo LAN completados y verificados.
 - La ejecución real de GitHub Actions terminó correctamente en verde.
-- **Fase 2 iniciada, pero no terminada.** Las Historias 1, 2 y 3 están completadas. La implementación
-  automática de Historia 4 está lista y permanece abierta hasta validar el flujo completo con dos
-  usuarios en Android real.
+- **Fase 2 iniciada, pero no terminada.** Las Historias 1 a 4 están completadas. Historia 5 todavía
+  no se ha iniciado y existe únicamente como execution plan activo.
 - Existe código no financiero para API, móvil, contratos, dominio mínimo y persistencia PostgreSQL.
-- Existen invitaciones dirigidas, opacas, expirables, revocables y de un solo uso; todavía no se ha
-  registrado la validación manual de incorporación de una segunda persona.
+- Existen invitaciones dirigidas, opacas, expirables, revocables y de un solo uso. La aceptación con
+  una segunda identidad/dispositivo real continúa como deuda de validación manual; no se afirma que
+  haya sido validada manualmente.
 - No existen administración avanzada de integrantes, ledger, operaciones monetarias ni integración
   de IA.
 - ADR-001, ADR-005, ADR-006 y ADR-007 permanecen aceptados.
@@ -90,6 +90,9 @@ packages/
 tests/                 # verificaciones arquitectónicas
 docs/
   adr/
+  exec-plans/          # trabajo operacional activo y completado
+  mobile/              # fuente de verdad del sistema visual móvil
+  project-state.md     # snapshot operacional actual
 ```
 
 ## PostgreSQL local y migraciones
@@ -397,9 +400,9 @@ el Household y siempre crea `Member Active` dentro de la misma transacción que 
 Un reintento del mismo `User` es seguro; otro `User`, un código vencido/revocado o una membresía
 histórica no activa reciben un error público uniforme.
 
-### Validación manual pendiente en Android
+### Deuda de validación manual en Android
 
-Antes de cerrar Historia 4, usa dos cuentas ficticias con correos verificados:
+Para completar la evidencia manual pendiente, usa dos cuentas ficticias con correos verificados:
 
 1. Con User A Owner, crea una invitación para el correo verificado de User B y comparte el código
    mediante la hoja del sistema.
@@ -429,7 +432,9 @@ indica y la API sigue validando cada operación. El código crudo de una invitac
 memoria, nunca viaja como parámetro de ruta y se elimina al compartir o cerrar el modal.
 
 El tema usa componentes propios pequeños sobre React Native, Expo Router, `expo-linear-gradient`,
-`@expo/vector-icons` y Manrope; no incorpora un framework de UI ni animaciones complejas. La
+`@expo/vector-icons` y Manrope; no incorpora un framework de UI. Las microinteracciones, glows y
+transiciones usan `Animated` y respetan Reduce Motion. La fuente visual vigente es
+[`docs/mobile/design-system.md`](docs/mobile/design-system.md). La
 integración de módulos visuales nativos requiere generar e instalar un development build nuevo:
 
 ```bash
@@ -476,6 +481,17 @@ en redes **privadas** para los puertos 3000 y 8081; este comando no modifica reg
 No es un despliegue público ni crea un APK. Presiona `Ctrl+C` para detener ambos procesos.
 
 ## Controles
+
+La interfaz habitual es:
+
+```bash
+pnpm verify
+pnpm verify:full
+```
+
+`verify` no requiere PostgreSQL ni Auth0 real. `verify:full` añade migraciones y suites con base de
+datos; requiere la instancia local documentada o PostgreSQL efímero de CI. Ambos conservan el primer
+exit code fallido y no despliegan ni publican. Los comandos individuales siguen disponibles:
 
 ```bash
 pnpm install --frozen-lockfile
@@ -531,8 +547,10 @@ profesional garantizada y funcionamiento offline completo.
 Antes de modificar el proyecto:
 
 1. Lee [`AGENTS.md`](AGENTS.md).
-2. Sigue el orden de [`docs/00-index.md`](docs/00-index.md).
-3. Consulta el roadmap y los ADR relacionados con una sola historia activa.
+2. Sigue el orden de [`docs/00-index.md`](docs/00-index.md) y revisa
+   [`docs/project-state.md`](docs/project-state.md).
+3. Ejecuta únicamente el plan aplicable de [`docs/exec-plans/active/`](docs/exec-plans/README.md) y
+   consulta sus ADR relacionados.
 4. No asumas decisiones que afecten saldos, auditoría, seguridad o privacidad.
 5. No incluyas secretos ni hagas commit, push o cambios de rama sin autorización explícita.
 
@@ -550,6 +568,7 @@ Antes de modificar el proyecto:
 
 ## Próximo paso recomendado
 
-Completar la validación manual de Historia 4 con dos usuarios Android. Después corresponde una
-historia adicional de Fase 2 para visibilidad de recursos personales/compartidos y cierre de los
-criterios de aislamiento; no debe iniciarse Fase 3 todavía.
+Ejecutar únicamente el
+[plan activo de Fase 2 — Historia 5](docs/exec-plans/active/phase-2-story-5.md) para validar los gaps
+de visibilidad, aislamiento y auditoría. Mantener registrada la validación manual pendiente de una
+invitación con segunda identidad/dispositivo y no iniciar Fase 3.

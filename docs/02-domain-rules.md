@@ -35,7 +35,9 @@ El saldo nunca se obtiene de memoria conversacional ni de sumar respuestas del m
 19. Las operaciones relacionadas se ejecutan en una transacción de base de datos.
 20. Los saldos históricos se pueden reconstruir a partir de los movimientos.
 
-Las secciones siguientes desarrollan estas reglas, sus conceptos y ejemplos. Cambiarlas exige actualizar `AGENTS.md`, pruebas y cualquier ADR relacionado en la misma tarea.
+Las secciones siguientes desarrollan estas reglas, sus conceptos y ejemplos. Cambiarlas exige
+actualizar pruebas, referencias operativas y cualquier ADR relacionado en la misma tarea; no se
+mantiene una copia paralela dentro de `AGENTS.md`.
 
 ## Vocabulario base
 

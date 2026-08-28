@@ -62,7 +62,8 @@ Ninguna técnica. Requiere revisión posterior con usuarios piloto y personas re
 ### Criterios de aceptación
 
 - Existen y se enlazan todos los documentos definidos en [`00-index.md`](00-index.md).
-- Las 20 reglas financieras innegociables están en `AGENTS.md` y en dominio.
+- Las 20 reglas financieras innegociables están en dominio y `AGENTS.md` dirige a esa fuente de
+  verdad sin duplicarlas.
 - La propuesta tecnológica distingue decisiones iniciales de ADR pendientes.
 - El ledger, la separación entre cuentas/categorías y los compromisos están explicados con ejemplos.
 - Cada fase del roadmap contiene las nueve secciones obligatorias.
@@ -171,10 +172,11 @@ Autenticación real, tablas financieras, ledger, pantallas de producto, IA y des
 
 ### Estado
 
-**Iniciada el 14 de agosto de 2026; no cerrada.** Las Historias 1, 2 y 3 están completadas. Historia
-4 tiene implementación y validación automatizada listas, pero permanece abierta hasta completar el
-flujo manual con dos usuarios en Android real. Recursos personales/compartidos, administración
-avanzada de integrantes, recursos financieros y RLS no se han iniciado.
+**Iniciada el 14 de agosto de 2026; no cerrada.** Las Historias 1 a 4 están completadas. La
+aceptación de una invitación con una segunda identidad/dispositivo real permanece como deuda de
+validación manual y no se afirma como evidencia ejecutada. Historia 5 todavía no se ha iniciado y
+existe únicamente como [execution plan activo](exec-plans/active/phase-2-story-5.md). Recursos
+financieros, administración avanzada de integrantes y RLS no se han iniciado.
 
 ### Evidencia de Historia 1
 
@@ -231,7 +233,7 @@ avanzada de integrantes, recursos financieros y RLS no se han iniciado.
   estado vacío, creación del primer y segundo Household, listado, cambio de selección, persistencia
   tras cerrar/reabrir, consulta de perfil y sesión activa.
 
-### Evidencia de Historia 4 — implementación automática lista; validación Android pendiente
+### Evidencia de Historia 4 — completada; deuda de validación manual registrada
 
 - `HouseholdInvitation` separado de membership, migración versionada, hash SHA-256 único de un
   token CSPRNG de 256 bits, expiración configurable y constraints de integridad;
@@ -262,7 +264,7 @@ avanzada de integrantes, recursos financieros y RLS no se han iniciado.
 - el código crudo de invitación nunca entra a parámetros de ruta y se elimina al compartir o cerrar
   su modal;
 - este ajuste mejora la validación y usabilidad de Historia 4, pero no sustituye la prueba manual
-  pendiente con dos identidades Android ni inicia Fase 5.
+  pendiente con dos identidades Android ni inicia la Historia 5 de Fase 2.
 
 ### Objetivo
 
@@ -285,8 +287,8 @@ Establecer identidad, aislamiento por hogar y permisos antes de almacenar finanz
   interna mediante una API que valide el access token. **Completada en Historia 2.**
 - Como usuario, quiero crear, consultar y seleccionar sus hogares autorizados. **Completada en
   Historia 3.**
-- Como usuario, quiero invitar a mi pareja con control explícito. **Implementación automática lista;
-  validación Android pendiente en Historia 4.**
+- Como usuario, quiero invitar a mi pareja con control explícito. **Completada en Historia 4; la
+  validación manual con segunda identidad/dispositivo permanece registrada como deuda.**
 - Como integrante, quiero que mis recursos personales respeten visibilidad.
 - Como sistema, quiero rechazar todo acceso cruzado entre hogares.
 
