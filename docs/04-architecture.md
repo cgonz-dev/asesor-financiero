@@ -10,7 +10,8 @@ un development build Android contra un tenant exclusivo de desarrollo. Historia 
 endpoints Household autenticados, el primer resolver/policy de ADR-006 y la experiencia móvil de
 lista, creación y selección, validada en un development build Android. Historia 4 implementa
 invitaciones e incorporación de Member. La prueba manual con una segunda identidad/dispositivo
-permanece como deuda explícita, sin afirmar evidencia inexistente. Historia 5 todavía no se inicia.
+permanece como deuda explícita, sin afirmar evidencia inexistente. Historia 5 completa la policy
+pura de visibilidad, las pruebas negativas y la auditoría atómica de creación de Household.
 Administración avanzada de integrantes, recursos financieros y RLS permanecen fuera del incremento.
 
 ## Objetivos arquitectónicos
@@ -46,7 +47,8 @@ Administración avanzada de integrantes, recursos financieros y RLS permanecen f
 Fase 1 creó la estructura base. La Historia 1 de Fase 2 añadió dominio mínimo independiente y
 adaptadores de persistencia dentro de la API. Historia 2 añade autenticación, Historia 3 incorpora
 el primer límite Household HTTP/móvil e Historia 4 añade invitaciones dirigidas y auditoría mínima,
-sin introducir lógica financiera; las áreas de fases posteriores siguen sin lógica funcional:
+Historia 5 añade policies puras de visibilidad sin introducir recursos financieros; las áreas de
+fases posteriores siguen sin lógica funcional:
 
 ```text
 apps/
@@ -152,8 +154,9 @@ transacción para garantizar exactamente uno al inicio.
 
 La segunda migración de Fase 2 agrega `household_invitation` y `audit_event`. La invitación mantiene
 solo el hash del token, su Household, la membership Owner creadora, la restricción de correo y sus
-timestamps de ciclo. La auditoría actual es deliberadamente mínima y solo registra los tres eventos
-de invitación implementados; no sustituye el diseño general pendiente de ADR-019.
+timestamps de ciclo. La auditoría actual es deliberadamente mínima y registra la creación de
+Household y los tres eventos de invitación implementados; no sustituye el diseño general pendiente
+de ADR-019.
 
 Prisma, sus repositorios y las transacciones viven en `apps/api`; `packages/domain` no importa
 NestJS ni Prisma. El desarrollo local usa `prisma dev` porque el motor Docker disponible no estaba
@@ -292,6 +295,24 @@ transaccional, roles configurables ni administración avanzada de membresías.
 La implementación automática y las pruebas PostgreSQL completaron Historia 4. La validación en
 Android real con una segunda identidad/dispositivo permanece pendiente y debe conservarse en
 `project-state.md` al evaluar el cierre formal de Fase 2.
+
+## Policies de visibilidad y auditoría básica de Historia 5
+
+`packages/domain` concentra dos decisiones puras y sin frameworks:
+
+- capabilities administrativas de Household, con membership `Active` y denegación por defecto;
+- lectura de un descriptor de recurso no financiero según acción, capability aplicable, mismo
+  Household, ownership y audiencia `Private`, `SelectedMembers` o `Household`.
+
+La policy no crea enums de persistencia, contratos, endpoints ni recursos ficticios. `Private`
+autoriza solo al propietario activo; `SelectedMembers` al propietario o memberships activas
+seleccionadas; `Household` a memberships activas con la capability correspondiente. El rol Owner no
+omite ownership/visibilidad y toda acción o combinación desconocida se deniega.
+
+La API conserva el resolver `User + Household + Active HouseholdMembership` y delega su matriz de
+capabilities al dominio. La creación transaccional de un Household ahora incluye
+`household.created`; si la auditoría falla, también revierten Household y membership. No hubo
+cambio de schema, migración, contrato, OpenAPI ni comportamiento móvil.
 
 ## Navegación y sistema visual móvil de Fase 2
 
@@ -432,8 +453,8 @@ artefacto OpenAPI versionado permanezca actualizado. No despliega ni publica art
 | ADR-019 | Observabilidad, auditoría y redacción de datos sensibles | Fase 3; completar antes de beta | Pendiente |
 | ADR-020 | Backups, restauración, RPO/RTO y continuidad | Antes de beta | Pendiente |
 
-ADR-001, ADR-005, ADR-006 y ADR-007 están aceptados. Las Historias 1 a 4 de Fase 2 están
-completadas; Historia 5 todavía no se ha iniciado. La validación Android con segunda identidad
-permanece como deuda manual explícita. Esto
+ADR-001, ADR-005, ADR-006 y ADR-007 están aceptados. Las Historias 1 a 5 de Fase 2 están
+completadas. La validación Android con segunda identidad permanece como deuda manual explícita, por
+lo que Fase 2 continúa abierta. Esto
 no amplía el alcance a administración avanzada de integrantes, RLS ni historias financieras. Los
 demás IDs son reservas de trabajo hasta que exista contexto, alternativas y una decisión revisable.

@@ -144,6 +144,16 @@ describe('Phase 2 story 1 PostgreSQL persistence', () => {
         where: { householdId: created.household.id, role: PrismaHouseholdRole.Member },
       }),
     ).resolves.toBe(0);
+    await expect(
+      prisma.auditEvent.findMany({ where: { resourceId: created.household.id } }),
+    ).resolves.toEqual([
+      expect.objectContaining({
+        action: 'household.created',
+        actorUserId: user.id,
+        householdId: created.household.id,
+        result: 'succeeded',
+      }),
+    ]);
   });
 
   it('supports multiple Households per User and lists only Active memberships', async () => {
@@ -233,6 +243,33 @@ describe('Phase 2 story 1 PostgreSQL persistence', () => {
 
     await expect(prisma.household.count({ where: { name } })).resolves.toBe(0);
     await expect(prisma.householdMembership.count()).resolves.toBe(0);
+  });
+
+  it('rolls back Household and membership when its audit event cannot be persisted', async () => {
+    const name = 'Hogar con auditoría atómica';
+    const owner = await resolveIdentity.execute(externalIdentity('provider|audit-rollback-owner'));
+    const failureConstraint = 'test_reject_household_creation_audit';
+
+    await prisma.$executeRawUnsafe(
+      `ALTER TABLE "audit_event" DROP CONSTRAINT IF EXISTS "${failureConstraint}"`,
+    );
+    await prisma.$executeRawUnsafe(
+      `ALTER TABLE "audit_event" ADD CONSTRAINT "${failureConstraint}" CHECK ("action" <> 'household.created') NOT VALID`,
+    );
+
+    try {
+      await expect(
+        createHousehold.execute({ internalUserId: owner.id, name }),
+      ).rejects.toBeDefined();
+    } finally {
+      await prisma.$executeRawUnsafe(
+        `ALTER TABLE "audit_event" DROP CONSTRAINT IF EXISTS "${failureConstraint}"`,
+      );
+    }
+
+    await expect(prisma.household.count({ where: { name } })).resolves.toBe(0);
+    await expect(prisma.householdMembership.count()).resolves.toBe(0);
+    await expect(prisma.auditEvent.count()).resolves.toBe(0);
   });
 
   it('scopes active membership lookup by both Household and User', async () => {

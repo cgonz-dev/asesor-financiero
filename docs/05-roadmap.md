@@ -172,11 +172,11 @@ Autenticación real, tablas financieras, ledger, pantallas de producto, IA y des
 
 ### Estado
 
-**Iniciada el 14 de agosto de 2026; no cerrada.** Las Historias 1 a 4 están completadas. La
+**Iniciada el 14 de agosto de 2026; no cerrada.** Las Historias 1 a 5 están completadas. La
 aceptación de una invitación con una segunda identidad/dispositivo real permanece como deuda de
-validación manual y no se afirma como evidencia ejecutada. Historia 5 todavía no se ha iniciado y
-existe únicamente como [execution plan activo](exec-plans/active/phase-2-story-5.md). Recursos
-financieros, administración avanzada de integrantes y RLS no se han iniciado.
+validación manual y no se afirma como evidencia ejecutada. Por ello todavía no se recomienda el
+cierre formal de la fase. Recursos financieros, administración avanzada de integrantes y RLS no se
+han iniciado.
 
 ### Evidencia de Historia 1
 
@@ -264,7 +264,25 @@ financieros, administración avanzada de integrantes y RLS no se han iniciado.
 - el código crudo de invitación nunca entra a parámetros de ruta y se elimina al compartir o cerrar
   su modal;
 - este ajuste mejora la validación y usabilidad de Historia 4, pero no sustituye la prueba manual
-  pendiente con dos identidades Android ni inicia la Historia 5 de Fase 2.
+  pendiente con dos identidades Android.
+
+### Evidencia de Historia 5 — completada el 27 de agosto de 2026
+
+- auditoría de los gaps reales confirmó que identidad autenticada, membership activa, roles,
+  errores no enumerables e IDOR de hogares/invitaciones ya estaban cubiertos;
+- `packages/domain` contiene matrices puras y con denegación por defecto para capabilities y lectura
+  `Private`, `SelectedMembers` y `Household`;
+- la policy exige mismo Household, membership `Active` y capability aplicable; Owner no obtiene
+  bypass sobre un recurso `Private` ajeno;
+- pruebas negativas cubren dos Users/dos Households, estados inactivos, referencias seleccionadas
+  manipuladas, capability ausente y valores desconocidos;
+- la creación de Household escribe `household.created` en la misma transacción que Household y
+  Owner membership; una falla de auditoría revierte toda la operación;
+- no cambiaron schema Prisma, migraciones, contratos, OpenAPI, endpoints ni mobile;
+- matriz automatizada final: 183 pruebas en 33 archivos, Expo Doctor 21/21 y verification harness
+  en verde;
+- la Historia 5 está completa, pero Fase 2 permanece abierta hasta registrar la validación manual
+  pendiente con una segunda identidad/dispositivo y realizar la revisión formal de cierre.
 
 ### Objetivo
 
@@ -289,8 +307,10 @@ Establecer identidad, aislamiento por hogar y permisos antes de almacenar finanz
   Historia 3.**
 - Como usuario, quiero invitar a mi pareja con control explícito. **Completada en Historia 4; la
   validación manual con segunda identidad/dispositivo permanece registrada como deuda.**
-- Como integrante, quiero que mis recursos personales respeten visibilidad.
-- Como sistema, quiero rechazar todo acceso cruzado entre hogares.
+- Como integrante, quiero que mis recursos personales respeten visibilidad. **Policy pura
+  completada en Historia 5; se conectará al introducir cada recurso real en su fase.**
+- Como sistema, quiero rechazar todo acceso cruzado entre hogares. **Completada para el alcance no
+  financiero de Fase 2 en Historia 5.**
 
 ### Dependencias
 

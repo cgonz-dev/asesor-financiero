@@ -1,5 +1,21 @@
 export { DomainValidationError } from './errors';
 export {
+  HouseholdCapability,
+  ResourceAction,
+  ResourceVisibility,
+  allowsHouseholdCapability,
+  allowsResourceAction,
+} from './authorization';
+export type {
+  HouseholdCapability as HouseholdCapabilityValue,
+  HouseholdCapabilityMembership,
+  ProtectedHouseholdResource,
+  ResourceAction as ResourceActionValue,
+  ResourceActorMembership,
+  ResourceAuthorizationInput,
+  ResourceVisibility as ResourceVisibilityValue,
+} from './authorization';
+export {
   HouseholdMembershipStatus,
   HouseholdRole,
   MAX_INVITATION_TARGET_EMAIL_LENGTH,

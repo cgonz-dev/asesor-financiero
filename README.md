@@ -12,8 +12,8 @@ estructuradas y explicaciones útiles, sin convertir a la IA en fuente de verdad
 - **Fase 1 cerrada:** bootstrap reproducible, health contractual, OpenAPI, cliente móvil mínimo,
   CI inicial y modo LAN completados y verificados.
 - La ejecución real de GitHub Actions terminó correctamente en verde.
-- **Fase 2 iniciada, pero no terminada.** Las Historias 1 a 4 están completadas. Historia 5 todavía
-  no se ha iniciado y existe únicamente como execution plan activo.
+- **Fase 2 iniciada, pero no terminada.** Las Historias 1 a 5 están completadas. Su cierre formal
+  espera la validación manual pendiente con una segunda identidad/dispositivo.
 - Existe código no financiero para API, móvil, contratos, dominio mínimo y persistencia PostgreSQL.
 - Existen invitaciones dirigidas, opacas, expirables, revocables y de un solo uso. La aceptación con
   una segunda identidad/dispositivo real continúa como deuda de validación manual; no se afirma que
@@ -400,6 +400,18 @@ el Household y siempre crea `Member Active` dentro de la misma transacción que 
 Un reintento del mismo `User` es seguro; otro `User`, un código vencido/revocado o una membresía
 histórica no activa reciben un error público uniforme.
 
+## Visibilidad y auditoría básica
+
+Historia 5 agrega en `packages/domain` una policy pura de lectura para las audiencias `Private`,
+`SelectedMembers` y `Household`. La decisión combina acción, capability, membership `Active`, mismo
+Household, ownership y selección explícita. El rol Owner no concede acceso a un recurso `Private`
+ajeno y toda combinación desconocida se deniega.
+
+Esta policy es deliberadamente no financiera: todavía no existen cuentas, movimientos, endpoints o
+tablas de recursos que la consuman. La creación de Household ahora audita `household.created` de
+forma atómica, además de los tres eventos de invitaciones ya existentes. No cambiaron contratos,
+OpenAPI, migraciones ni mobile.
+
 ### Deuda de validación manual en Android
 
 Para completar la evidencia manual pendiente, usa dos cuentas ficticias con correos verificados:
@@ -563,12 +575,13 @@ Antes de modificar el proyecto:
 - La API todavía no tiene infraestructura general de rate limiting. La aceptación de invitaciones
   mitiga enumeración con 256 bits de entropía, input de longitud fija, errores uniformes y fail
   closed; debe añadirse una política operativa antes de exponer el servicio públicamente.
-- La auditoría de Historia 4 cubre eventos exitosos de invitación. La correlación y auditoría general
-  de intentos fallidos continúan como parte del gate de observabilidad de ADR-019.
+- La auditoría de Fase 2 cubre eventos exitosos de creación de Household e invitaciones. La
+  correlación y auditoría general de intentos fallidos continúan como parte del gate de
+  observabilidad de ADR-019.
 
 ## Próximo paso recomendado
 
-Ejecutar únicamente el
-[plan activo de Fase 2 — Historia 5](docs/exec-plans/active/phase-2-story-5.md) para validar los gaps
-de visibilidad, aislamiento y auditoría. Mantener registrada la validación manual pendiente de una
-invitación con segunda identidad/dispositivo y no iniciar Fase 3.
+Completar y registrar la validación manual de una invitación con segunda identidad/dispositivo.
+Después corresponde revisar formalmente el cierre de Fase 2 y preparar el spike de RLS exigido por
+ADR-006 antes de cualquier tabla financiera de Fase 3. No iniciar Fase 3 mientras esos gates sigan
+pendientes.

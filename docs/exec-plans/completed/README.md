@@ -10,6 +10,10 @@ Según el [roadmap](../../05-roadmap.md) y el [estado actual](../../project-stat
 - Fase 2 — Historia 3: creación, listado y selección de hogares.
 - Fase 2 — Historia 4: invitaciones dirigidas e incorporación de Member.
 
+Planes completados bajo Harness 1.0:
+
+- [Fase 2 — Historia 5](phase-2-story-5.md): aislamiento, policies de visibilidad y auditoría
+  básica.
+
 La validación manual de aceptación con una segunda identidad/dispositivo continúa registrada como
 deuda; no se inventa evidencia retrospectiva.
-

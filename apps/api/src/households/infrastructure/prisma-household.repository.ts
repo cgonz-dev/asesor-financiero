@@ -17,6 +17,8 @@ import type {
   UserHousehold,
 } from '../application/household-repository';
 
+const AUDIT_RESULT_SUCCEEDED = 'succeeded';
+
 function toHouseholdRecord(household: {
   id: string;
   name: string;
@@ -96,6 +98,16 @@ export class PrismaHouseholdRepository implements HouseholdRepository {
           userId: owner.id,
           role: PrismaHouseholdRole.Owner,
           status: PrismaMembershipStatus.Active,
+        },
+      });
+
+      await databaseTransaction.auditEvent.create({
+        data: {
+          action: 'household.created',
+          actorUserId: owner.id,
+          householdId: household.id,
+          resourceId: household.id,
+          result: AUDIT_RESULT_SUCCEEDED,
         },
       });
 

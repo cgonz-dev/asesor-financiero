@@ -61,7 +61,12 @@ La matriz inicial debe distinguir al menos:
 - recurso del hogar;
 - información agregada que no revele detalles personales no autorizados.
 
-Los roles, permisos de administración, consentimiento de pareja y efectos de abandonar un hogar están definidos documentalmente en [ADR-006](adr/0006-autorizacion-roles-visibilidad-y-aislamiento.md); su implementación requiere una autorización posterior de Fase 2. No se usará únicamente ocultamiento en UI como control de acceso.
+Los roles, permisos de administración, consentimiento de pareja y efectos de abandonar un hogar
+están definidos en [ADR-006](adr/0006-autorizacion-roles-visibilidad-y-aislamiento.md). Historia 5
+implementa la matriz pura de lectura `Private` / `SelectedMembers` / `Household` sin crear todavía
+recursos financieros: exige membership activa, mismo hogar y capability aplicable; Owner no puede
+leer un recurso `Private` ajeno. Cada recurso futuro deberá invocar esa policy desde su caso de uso
+y acotar además su consulta. Ocultar elementos en UI nunca es control de acceso.
 
 ## Autenticación y sesiones
 
@@ -121,12 +126,21 @@ de la invitación persistida y siempre crea Member; Auth0 Organizations, roles d
 del cliente no conceden autorización. Los cambios atómicos escriben auditoría mínima sin token,
 hash ni correo.
 
+Historia 5 mueve la matriz de capabilities a una función pura del dominio y agrega una policy de
+lectura con denegación por defecto para ownership y las tres audiencias de ADR-006. Las pruebas
+incluyen Owner sin bypass privado, memberships no activas, capability ausente, referencias
+cross-household y valores desconocidos. No existe aún un recurso financiero, endpoint o contrato al
+que conectar esta policy; introducirlo antes de su fase ampliaría alcance.
+
 Todavía no existe infraestructura transversal de rate limiting. Mientras el servicio siga limitado
 a desarrollo, aceptación reduce fuerza bruta y enumeración mediante token de 256 bits, formato y
 longitud acotados, errores uniformes y fail closed. Una política proporcionada de rate limiting es
 gate obligatorio antes de exposición pública; no se añadió un subsistema aislado solo para esta
-historia. La auditoría actual registra resultados exitosos; correlación e intentos fallidos forman
-parte del trabajo general de ADR-019.
+historia. La auditoría actual registra resultados exitosos de creación de Household y creación,
+revocación y aceptación de invitaciones. Cada evento contiene actor, Household, acción, resultado,
+recurso e instante, sin token, hash o correo. La escritura es atómica con la acción: si falla el
+evento, se revierte la operación. Correlación e intentos fallidos forman parte del trabajo general
+de ADR-019.
 
 ## Protección de datos y secretos
 
@@ -284,7 +298,7 @@ La evidencia de un incidente se preserva con acceso restringido y sin ampliar in
 
 ## Decisiones pendientes de ADR
 
-- autorizar la implementación posterior de [ADR-006](adr/0006-autorizacion-roles-visibilidad-y-aislamiento.md) sobre roles, visibilidad, consentimiento y aislamiento/RLS;
+- ejecutar el spike de RLS exigido por [ADR-006](adr/0006-autorizacion-roles-visibilidad-y-aislamiento.md) antes de las primeras tablas financieras de Fase 3;
 - clasificación, retención, exportación y eliminación;
 - cifrado adicional a nivel de campo y gestión de claves;
 - auditoría, redacción, acceso de soporte y observabilidad;

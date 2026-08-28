@@ -5,9 +5,10 @@
 - Fecha: 2026-08-27.
 - Fase 1: cerrada.
 - Fase 2: abierta; no se declara cerrada.
-- Historias 1 a 4 de Fase 2: completadas.
-- Historia 5 de Fase 2: todavía no iniciada; existe solo como
-  [execution plan activo](exec-plans/active/phase-2-story-5.md).
+- Historias 1 a 5 de Fase 2: completadas.
+- Historia 5 completó policies puras de visibilidad, pruebas negativas y el gap de auditoría de
+  creación de Household; su [plan y evidencia](exec-plans/completed/phase-2-story-5.md) están
+  archivados.
 - ADR aceptados: [ADR-001](adr/0001-idioma-y-vocabulario-canonico.md),
   [ADR-005](adr/0005-autenticacion-y-ciclo-de-sesion-movil.md),
   [ADR-006](adr/0006-autorizacion-roles-visibilidad-y-aislamiento.md) y
@@ -33,15 +34,19 @@ criterios; los [ADR](adr/README.md) conservan decisiones; los
 - Invitaciones dirigidas, opacas, expirables, revocables y de un solo uso; aceptación atómica,
   incorporación `Member Active` y auditoría mínima de invitaciones.
 - Aislamiento inicial de endpoints Household mediante membresía activa y policy de capacidad.
+- Policy pura y con denegación por defecto para lectura `Private`, `SelectedMembers` y `Household`:
+  exige membership activa, mismo hogar y capability; Owner no obtiene bypass sobre `Private`.
+- Auditoría atómica exitosa para `household.created`, `invitation.created`, `invitation.revoked` e
+  `invitation.accepted`, sin secretos, hashes ni correo.
 - App móvil en modo oscuro con Manrope, tabs `Inicio`/`Hogar`/`Perfil`, modales, safe areas,
   manejo de teclado, microinteracciones y Reduce Motion. La fuente visual es
   [`docs/mobile/design-system.md`](mobile/design-system.md).
 
 ## Baseline de calidad
 
-Última línea base registrada antes de crear Harness 1.0:
+Línea base verificada al completar Historia 5:
 
-- 174 pruebas aprobadas en 32 archivos;
+- 183 pruebas aprobadas en 33 archivos;
 - Expo Doctor 21/21;
 - lint, formato, typecheck, build web, OpenAPI, peers y `git diff --check` en verde;
 - Auth0 Android, consulta de perfil, hogares e invitaciones cubiertos por pruebas automatizadas;
@@ -58,13 +63,19 @@ pruebas automatizadas.
 
 Esta deuda debe permanecer visible al evaluar el cierre formal de Fase 2.
 
+## Recomendación de cierre de Fase 2
+
+Los gaps automáticos de Historia 5 están resueltos, pero **Fase 2 no debe cerrarse todavía**. Falta
+la validación manual con segunda identidad/dispositivo descrita arriba. Después de registrar esa
+evidencia procede una revisión formal de cierre; antes de crear tablas financieras de Fase 3 debe
+ejecutarse además el spike de RLS exigido por ADR-006.
+
 ## Todavía no implementado
 
-- Historia 5: policy completa `Private` / `SelectedMembers` / `Household`, gaps finales de
-  aislamiento y auditoría básica transversal.
+- Persistencia, contratos, endpoints o UI para recursos con visibilidad; la policy existe como
+  regla pura no financiera hasta que una fase posterior introduzca un recurso real.
 - Cuentas financieras, saldos, `FinancialTransaction`, ledger, dinero y migraciones financieras.
 - Fases 3 en adelante, incluida IA, tools, presupuestos, tarjetas, conciliación y dashboard.
 - PostgreSQL RLS, administración avanzada de integrantes, transferencia de Owner, expulsión,
   salida, `Admin` o co-owners.
 - Despliegue productivo, publicación en tiendas, integraciones bancarias y pagos reales.
-
