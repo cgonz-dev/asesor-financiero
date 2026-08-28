@@ -43,8 +43,15 @@ const EMPTY_INVITATIONS: HouseholdInvitationsSnapshot = {
 
 const MobileAppContext = createContext<MobileAppContextValue | undefined>(undefined);
 
-export function MobileAppProvider({ children }: PropsWithChildren) {
-  const [runtime] = useState(createMobileSessionRuntime);
+interface MobileAppProviderProps extends PropsWithChildren {
+  runtimeFactory?: typeof createMobileSessionRuntime;
+}
+
+export function MobileAppProvider({
+  children,
+  runtimeFactory = createMobileSessionRuntime,
+}: MobileAppProviderProps) {
+  const [runtime] = useState(runtimeFactory);
   const [session, setSession] = useState<SessionSnapshot>(() =>
     runtime.coordinator === undefined
       ? {
@@ -143,8 +150,6 @@ export function MobileAppProvider({ children }: PropsWithChildren) {
   }, [runtime]);
 
   const logout = useCallback(async () => {
-    runtime.householdsCoordinator?.clearMemory();
-    runtime.invitationsCoordinator?.clearMemory();
     await runtime.coordinator?.logout();
   }, [runtime]);
 

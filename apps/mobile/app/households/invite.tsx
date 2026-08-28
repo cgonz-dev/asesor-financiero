@@ -1,5 +1,5 @@
 import { InvitationTargetEmailSchema } from '@copiloto/contracts';
-import { Redirect, router } from 'expo-router';
+import { router } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Share, StyleSheet, Text, View } from 'react-native';
 
@@ -16,24 +16,14 @@ import {
 import { colors, fontFamilies, spacing } from '../../src/ui/theme';
 
 export default function InviteHouseholdMemberScreen() {
-  const {
-    createInvitation,
-    dismissRawInvitationToken,
-    internalUserId,
-    invitations,
-    selectedHousehold,
-    session,
-  } = useMobileApp();
+  const { createInvitation, dismissRawInvitationToken, invitations, selectedHousehold } =
+    useMobileApp();
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string>();
   const rawToken = invitations.rawInvitationToken;
   const creating = invitations.status === 'creating';
 
   useEffect(() => dismissRawInvitationToken, [dismissRawInvitationToken]);
-
-  if (session.status !== 'authenticated' || internalUserId === undefined) {
-    return <Redirect href="/" />;
-  }
 
   const close = () => {
     dismissRawInvitationToken();

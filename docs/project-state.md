@@ -41,6 +41,9 @@ criterios; los [ADR](adr/README.md) conservan decisiones; los
 - App móvil en modo oscuro con Manrope, tabs `Inicio`/`Hogar`/`Perfil`, modales, safe areas,
   manejo de teclado, microinteracciones y Reduce Motion. La fuente visual es
   [`docs/mobile/design-system.md`](mobile/design-system.md).
+- Logout móvil con limpieza única del contexto de User y protección centralizada de rutas en el
+  Stack raíz; se eliminó el ciclo de redirects que podía producir `Maximum update depth exceeded`
+  en Android.
 
 ## Baseline de calidad
 

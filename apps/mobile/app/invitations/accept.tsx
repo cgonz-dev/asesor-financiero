@@ -1,5 +1,5 @@
 import { HouseholdInvitationTokenSchema } from '@copiloto/contracts';
-import { Redirect, router } from 'expo-router';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -15,15 +15,11 @@ import {
 import { spacing } from '../../src/ui/theme';
 
 export default function AcceptInvitationScreen() {
-  const { acceptInvitation, internalUserId, invitations, session } = useMobileApp();
+  const { acceptInvitation, invitations } = useMobileApp();
   const [token, setToken] = useState('');
   const [error, setError] = useState<string>();
   const [acceptedHouseholdName, setAcceptedHouseholdName] = useState<string>();
   const accepting = invitations.status === 'accepting';
-
-  if (session.status !== 'authenticated' || internalUserId === undefined) {
-    return <Redirect href="/" />;
-  }
 
   const submit = async () => {
     const parsed = HouseholdInvitationTokenSchema.safeParse(token.trim());

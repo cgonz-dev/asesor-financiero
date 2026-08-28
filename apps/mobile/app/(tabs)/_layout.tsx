@@ -1,10 +1,9 @@
 import Ionicons from '@expo/vector-icons/Ionicons';
-import { Redirect, Tabs } from 'expo-router';
+import { Tabs } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { Animated, Platform, StyleSheet, type ColorValue } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 
-import { useMobileApp } from '../../src/application/mobile-app-provider';
 import { useReducedMotion } from '../../src/ui/motion';
 import { colors, fontFamilies } from '../../src/ui/theme';
 
@@ -71,12 +70,7 @@ function TabIcon({
 }
 
 export default function TabsLayout() {
-  const { session } = useMobileApp();
   const insets = useSafeAreaInsets();
-
-  if (session.status !== 'authenticated') {
-    return <Redirect href="/" />;
-  }
 
   return (
     <Tabs

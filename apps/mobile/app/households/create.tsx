@@ -1,5 +1,5 @@
 import { HOUSEHOLD_NAME_MAX_LENGTH, HouseholdNameSchema } from '@copiloto/contracts';
-import { Redirect, router } from 'expo-router';
+import { router } from 'expo-router';
 import { useState } from 'react';
 import { StyleSheet, View } from 'react-native';
 
@@ -15,14 +15,10 @@ import {
 import { spacing } from '../../src/ui/theme';
 
 export default function CreateHouseholdScreen() {
-  const { createHousehold, households, internalUserId, session } = useMobileApp();
+  const { createHousehold, households } = useMobileApp();
   const [name, setName] = useState('');
   const [error, setError] = useState<string>();
   const creating = households.status === 'creating';
-
-  if (session.status !== 'authenticated' || internalUserId === undefined) {
-    return <Redirect href="/" />;
-  }
 
   const submit = async () => {
     const parsed = HouseholdNameSchema.safeParse(name);

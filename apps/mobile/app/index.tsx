@@ -1,4 +1,3 @@
-import { Redirect } from 'expo-router';
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
 import { useMobileApp } from '../src/application/mobile-app-provider';
@@ -9,10 +8,6 @@ import { colors, fontFamilies, spacing } from '../src/ui/theme';
 export default function SessionGateScreen() {
   const { authenticationAvailable, login, session } = useMobileApp();
   const presentation = getSessionPresentation(session.status, session.message);
-
-  if (session.status === 'authenticated') {
-    return <Redirect href="/(tabs)" />;
-  }
 
   if (session.status === 'restoring') {
     return (

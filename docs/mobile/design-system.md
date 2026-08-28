@@ -93,10 +93,12 @@ antes de crear componentes aislados.
 
 ### Stack raíz
 
-- `index`: compuerta de sesión (`restoring`, acceso, error recuperable o redirección autenticada).
-- `(tabs)`: área autenticada.
+- `index`: compuerta disponible durante `restoring`, acceso o error recuperable.
+- `(tabs)`: área autenticada protegida por el Stack raíz.
 - `households/create`, `households/invite` e `invitations/accept`: presentación modal con entrada
-  desde abajo.
+  desde abajo y bajo la misma protección autenticada.
+- `Stack.Protected` recibe una sola decisión derivada del estado de sesión. Las pantallas y layouts
+  hijos no compiten con redirects propios durante login, invalidación o logout.
 - Transición raíz `fade_from_bottom`; gestures habilitados y botón Atrás de Android respetado.
 
 ### Tabs autenticadas

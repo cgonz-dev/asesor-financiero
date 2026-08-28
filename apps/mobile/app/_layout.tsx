@@ -11,7 +11,8 @@ import * as SystemUI from 'expo-system-ui';
 import { useEffect } from 'react';
 import { ActivityIndicator, StyleSheet, View } from 'react-native';
 
-import { MobileAppProvider } from '../src/application/mobile-app-provider';
+import { MobileAppProvider, useMobileApp } from '../src/application/mobile-app-provider';
+import { getRootRouteAccess } from '../src/navigation/root-route-access';
 import { colors } from '../src/ui/theme';
 
 export default function RootLayout() {
@@ -42,15 +43,28 @@ export default function RootLayout() {
   return (
     <MobileAppProvider>
       <StatusBar style="light" />
-      <Stack
-        screenOptions={{
-          animation: 'fade_from_bottom',
-          contentStyle: { backgroundColor: colors.background },
-          gestureEnabled: true,
-          headerShown: false,
-        }}
-      >
+      <RootNavigator />
+    </MobileAppProvider>
+  );
+}
+
+export function RootNavigator() {
+  const { session } = useMobileApp();
+  const access = getRootRouteAccess(session.status);
+
+  return (
+    <Stack
+      screenOptions={{
+        animation: 'fade_from_bottom',
+        contentStyle: { backgroundColor: colors.background },
+        gestureEnabled: true,
+        headerShown: false,
+      }}
+    >
+      <Stack.Protected guard={access.sessionGate}>
         <Stack.Screen name="index" />
+      </Stack.Protected>
+      <Stack.Protected guard={access.application}>
         <Stack.Screen name="(tabs)" />
         <Stack.Screen
           name="households/create"
@@ -64,8 +78,8 @@ export default function RootLayout() {
           name="invitations/accept"
           options={{ animation: 'slide_from_bottom', presentation: 'modal' }}
         />
-      </Stack>
-    </MobileAppProvider>
+      </Stack.Protected>
+    </Stack>
   );
 }
 

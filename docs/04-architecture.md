@@ -325,7 +325,8 @@ movimientos ni un dashboard financiero ficticio.
 `MobileAppProvider` es la composición móvil interna que crea una sola instancia del runtime y
 publica snapshots y acciones de los coordinadores existentes. La restauración de Auth0 sucede una
 vez; los cambios de ruta no recrean Credentials Manager, clientes REST ni coordinadores. Al perder
-la sesión se limpian Households, selección e invitaciones antes de volver a la compuerta. La
+la sesión se limpian Households, selección e invitaciones y el Stack raíz retira las rutas privadas
+mediante un único `Stack.Protected`; layouts y pantallas hijas no emiten redirects simultáneos. La
 selección persistida sigue siendo una preferencia revalidada por servidor y nunca autorización.
 
 El sistema visual local define tokens de color, espaciado, radios, tipografía Manrope y componentes

@@ -14,6 +14,8 @@ Planes completados bajo Harness 1.0:
 
 - [Fase 2 — Historia 5](phase-2-story-5.md): aislamiento, policies de visibilidad y auditoría
   básica.
+- [Hotfix de logout móvil](phase-2-logout-update-loop-hotfix.md): protección de rutas centralizada,
+  limpieza única del contexto de User y regresión contra ciclos de actualización.
 
 La validación manual de aceptación con una segunda identidad/dispositivo continúa registrada como
 deuda; no se inventa evidencia retrospectiva.
