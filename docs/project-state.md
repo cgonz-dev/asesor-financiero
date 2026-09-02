@@ -2,10 +2,17 @@
 
 ## Snapshot
 
-- Fecha: 2026-08-27.
+- Fecha: 2026-09-02.
 - Fase 1: cerrada.
-- Fase 2: abierta; no se declara cerrada.
-- Historias 1 a 5 de Fase 2: completadas.
+- Fase 2: cerrada formalmente el 2 de septiembre de 2026.
+- Historias 1 a 6 de Fase 2: completadas.
+- La validación manual real de invitaciones con una segunda identidad/dispositivo Android fue
+  completada correctamente; la deuda registrada de Historia 4 queda cerrada.
+- Historia 6 completó la experiencia Google-only, su validación en Auth0/Android real y la matriz
+  automática completa. Su [plan y evidencia](exec-plans/completed/phase-2-story-6.md) están
+  archivados.
+- El [plan de cierre formal](exec-plans/completed/phase-2-formal-closure.md) confirmó la evidencia
+  de toda la fase; Fase 3 no se inicia con este cierre.
 - Historia 5 completó policies puras de visibilidad, pruebas negativas y el gap de auditoría de
   creación de Household; su [plan y evidencia](exec-plans/completed/phase-2-story-5.md) están
   archivados.
@@ -44,6 +51,12 @@ criterios; los [ADR](adr/README.md) conservan decisiones; los
 - Logout móvil con limpieza única del contexto de User y protección centralizada de rutas en el
   Stack raíz; se eliminó el ciclo de redirects que podía producir `Maximum update depth exceeded`
   en Android.
+- Validación manual Android de una invitación dirigida con segunda identidad: después de conectar
+  correctamente la Post Login Action de Auth0, el access token incluyó el correo verificado, la
+  invitación vigente se aceptó y el flujo dejó la sesión activa sin debilitar la validación.
+- Pantalla propia de acceso con una sola acción `Continuar con Google`; conexión
+  `google-oauth2` fijada dentro del adaptador Auth0, botón oficial accesible y bloqueo de doble
+  toque. Auth0 conserva PKCE, audience, Credentials Manager, refresh y logout.
 
 ## Baseline de calidad
 
@@ -55,23 +68,51 @@ Línea base verificada al completar Historia 5:
 - Auth0 Android, consulta de perfil, hogares e invitaciones cubiertos por pruebas automatizadas;
 - GitHub Actions configurado con PostgreSQL efímero y sin depender de Auth0 real.
 
+Validación automática de Historia 6 ejecutada el 28 de agosto de 2026:
+
+- `pnpm install --frozen-lockfile`, pruebas enfocadas, `pnpm verify` y `pnpm verify:full` aprobados;
+- 195 pruebas aprobadas en 37 archivos: 141 unitarias, 28 de integración y 26 E2E;
+- migraciones al día, lint, formato, typecheck, builds, OpenAPI, peers, Expo Doctor 21/21 y
+  `git diff --check` en verde;
+- shell web revisado a 390 × 844 con una sola acción Google; Auth0 real continúa requiriendo
+  development build Android.
+
+Validación manual de Historia 6 registrada el 2 de septiembre de 2026:
+
+- Auth0 mantiene únicamente Google habilitado para la Native Application y la Post Login Action
+  permanece conectada;
+- login, cancelación, reintento, restauración, logout y nuevo login funcionan en Android real;
+- la sesión cerrada no se restaura y nunca aparece email/password ni el selector genérico de
+  conexiones de Auth0.
+
+Reverificación de cierre resuelta el 2 de septiembre de 2026:
+
+- la inserción directa de la prueba de invitaciones tenía `expiresAt` derivado de `START`, pero
+  recibía `createdAt` actual de la base de datos; por ello fallaba primero la constraint de
+  expiración y Prisma exponía el `check_violation` `23514` como `P2039`;
+- la corrección fija `createdAt` de las dos inserciones directas para que validen de forma
+  determinista la unicidad (`P2002`) y la relación creadora cruzada (`P2003`) pretendidas;
+- la prueba afectada aprobó 9/9 y `pnpm verify:full` aprobó 195/195 en 37 archivos, incluidas las
+  dos migraciones, lint, formato, typecheck, builds, OpenAPI, peers, Expo Doctor 21/21 y diff.
+
 La interfaz reutilizable de verificación se documenta en
 [`docs/exec-plans/README.md`](exec-plans/README.md).
 
-## Deuda de validación manual
+## Validación manual de invitaciones
 
-La aceptación de una invitación con una segunda identidad/dispositivo real continúa pendiente de
-validación manual. No se afirma que haya sido validada manualmente. El flujo está cubierto por
-pruebas automatizadas.
+La aceptación con una segunda identidad/dispositivo Android se completó correctamente. La
+validación confirmó el camino Owner crea invitación dirigida → segunda identidad obtiene un access
+token con correo verificado → aceptación → incorporación al Household. El incidente previo se
+debía a que la Post Login Action existía en Auth0 pero todavía no estaba conectada al Login Flow;
+al desplegarla y aplicarla al trigger, el flujo funcionó sin reiniciar API, base de datos o Metro.
 
-Esta deuda debe permanecer visible al evaluar el cierre formal de Fase 2.
+Esta evidencia es manual e informada durante la validación real; las pruebas automáticas continúan
+cubriendo expiración, revocación, reutilización, concurrencia y límites Owner/Member.
 
 ## Recomendación de cierre de Fase 2
 
-Los gaps automáticos de Historia 5 están resueltos, pero **Fase 2 no debe cerrarse todavía**. Falta
-la validación manual con segunda identidad/dispositivo descrita arriba. Después de registrar esa
-evidencia procede una revisión formal de cierre; antes de crear tablas financieras de Fase 3 debe
-ejecutarse además el spike de RLS exigido por ADR-006.
+Todos los criterios de Fase 2 están satisfechos y la fase está cerrada formalmente. Antes de crear
+tablas financieras o iniciar Fase 3 debe planearse y ejecutarse el spike de RLS exigido por ADR-006.
 
 ## Todavía no implementado
 
@@ -81,4 +122,5 @@ ejecutarse además el spike de RLS exigido por ADR-006.
 - Fases 3 en adelante, incluida IA, tools, presupuestos, tarjetas, conciliación y dashboard.
 - PostgreSQL RLS, administración avanzada de integrantes, transferencia de Owner, expulsión,
   salida, `Admin` o co-owners.
+- Spike de RLS previo a las primeras tablas financieras de Fase 3; Fase 3 no está iniciada.
 - Despliegue productivo, publicación en tiendas, integraciones bancarias y pagos reales.

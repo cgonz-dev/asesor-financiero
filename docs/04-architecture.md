@@ -2,17 +2,13 @@
 
 ## Estado
 
-**Fase 1 cerrada y Fase 2 iniciada, no terminada.** El bootstrap técnico, health contractual,
-cliente móvil mínimo, OpenAPI reproducible, CI inicial y modo LAN quedaron validados en Fase 1. La
-Historia 1 de Fase 2 implementa PostgreSQL/Prisma, identidad interna, el núcleo mínimo de Household
-y Membership, y readiness. Historia 2 implementa y valida el límite Auth0, sesión móvil y `/me` en
-un development build Android contra un tenant exclusivo de desarrollo. Historia 3 implementa los
-endpoints Household autenticados, el primer resolver/policy de ADR-006 y la experiencia móvil de
-lista, creación y selección, validada en un development build Android. Historia 4 implementa
-invitaciones e incorporación de Member. La prueba manual con una segunda identidad/dispositivo
-permanece como deuda explícita, sin afirmar evidencia inexistente. Historia 5 completa la policy
-pura de visibilidad, las pruebas negativas y la auditoría atómica de creación de Household.
-Administración avanzada de integrantes, recursos financieros y RLS permanecen fuera del incremento.
+**Fases 1 y 2 cerradas.** El bootstrap técnico, health contractual, cliente móvil mínimo, OpenAPI
+reproducible, CI inicial y modo LAN quedaron validados en Fase 1. Fase 2 implementó PostgreSQL/
+Prisma, identidad interna, hogares y memberships, Auth0/sesión móvil, invitaciones dirigidas,
+policies de visibilidad y auditoría atómica, más el acceso Google-only. Las validaciones Android de
+invitaciones con segunda identidad y del ciclo Google-only están registradas, junto con la matriz
+completa verde. Administración avanzada de integrantes, recursos financieros y RLS permanecen
+fuera de Fase 2; el spike de RLS es un gate previo a Fase 3.
 
 ## Objetivos arquitectónicos
 
@@ -292,9 +288,9 @@ cliente puede compartir texto por la hoja nativa del sistema, pegar y aceptar el
 Households y mostrar una proyección mínima de integrantes. No existen magic links, correo
 transaccional, roles configurables ni administración avanzada de membresías.
 
-La implementación automática y las pruebas PostgreSQL completaron Historia 4. La validación en
-Android real con una segunda identidad/dispositivo permanece pendiente y debe conservarse en
-`project-state.md` al evaluar el cierre formal de Fase 2.
+La implementación automática, las pruebas PostgreSQL y la validación en Android real con una
+segunda identidad/dispositivo completaron Historia 4. La prueba confirmó que la Post Login Action
+conectada al Login Flow entrega los claims verificados necesarios para aceptar la invitación.
 
 ## Policies de visibilidad y auditoría básica de Historia 5
 
@@ -454,8 +450,9 @@ artefacto OpenAPI versionado permanezca actualizado. No despliega ni publica art
 | ADR-019 | Observabilidad, auditoría y redacción de datos sensibles | Fase 3; completar antes de beta | Pendiente |
 | ADR-020 | Backups, restauración, RPO/RTO y continuidad | Antes de beta | Pendiente |
 
-ADR-001, ADR-005, ADR-006 y ADR-007 están aceptados. Las Historias 1 a 5 de Fase 2 están
-completadas. La validación Android con segunda identidad permanece como deuda manual explícita, por
-lo que Fase 2 continúa abierta. Esto
-no amplía el alcance a administración avanzada de integrantes, RLS ni historias financieras. Los
-demás IDs son reservas de trabajo hasta que exista contexto, alternativas y una decisión revisable.
+ADR-001, ADR-005, ADR-006 y ADR-007 están aceptados. Las Historias 1 a 6 de Fase 2, la validación
+Android con segunda identidad y la validación manual Google-only están completadas; la matriz
+`verify:full` está verde y Fase 2 está cerrada formalmente. Esto no amplía el alcance a
+administración avanzada de integrantes, RLS ni historias financieras. El spike de RLS requerido por
+ADR-006 permanece como gate previo a Fase 3. Los demás IDs son reservas de trabajo hasta que exista
+contexto, alternativas y una decisión revisable.

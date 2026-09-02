@@ -325,6 +325,7 @@ describe('Household invitations PostgreSQL integration', () => {
     await expect(
       prisma.householdInvitation.create({
         data: {
+          createdAt: new Date(START),
           createdByMembershipId: first.context.membership.id,
           expiresAt: new Date(START.getTime() + SEVEN_DAYS_MS),
           householdId: first.context.household.id,
@@ -337,6 +338,7 @@ describe('Household invitations PostgreSQL integration', () => {
     await expect(
       prisma.householdInvitation.create({
         data: {
+          createdAt: new Date(START),
           createdByMembershipId: first.context.membership.id,
           expiresAt: new Date(START.getTime() + SEVEN_DAYS_MS),
           householdId: second.context.household.id,

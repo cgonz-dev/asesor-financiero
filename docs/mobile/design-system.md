@@ -79,6 +79,10 @@ iconos o composiciones concretas.
 - `SectionHeader`: título, descripción y acción contextual.
 - `AppButton`: variantes `primary`, `secondary`, `ghost` y `danger`; mínimo 54 px, loading,
   disabled, ripple Android e interacción por presión.
+- `GoogleAuthButton`: única acción del acceso no autenticado; variante oscura del proveedor,
+  objetivo táctil de 54 px, “G” oficial multicolor, estado busy/disabled y bloqueo single-flight
+  contra doble toque. Su geometría y tipografía son una excepción de marca deliberada al botón
+  primario de la app.
 - `IconButton`: objetivo táctil de 48 × 48 px, etiqueta accesible y ripple Android.
 - `AppTextInput`: label visible, foco cian, error rojo, selección cian y mínimo 56 px.
 - `FeedbackCard`: tonos neutral, success, warning y danger; anuncia cambios mediante live region.
@@ -100,6 +104,22 @@ antes de crear componentes aislados.
 - `Stack.Protected` recibe una sola decisión derivada del estado de sesión. Las pantallas y layouts
   hijos no compiten con redirects propios durante login, invalidación o logout.
 - Transición raíz `fade_from_bottom`; gestures habilitados y botón Atrás de Android respetado.
+
+### Acceso Google-only
+
+- La compuerta no autenticada usa una composición propia: marca temporal, propuesta breve no
+  financiera, explicación de seguridad, feedback recuperable y una sola acción
+  `Continuar con Google`.
+- No presenta email, contraseña, Apple, registro ni selector de conexiones. El adaptador Auth0 fija
+  `google-oauth2`; la UI no recibe ni decide el nombre de conexión.
+- Durante `authenticating`, el botón conserva su etiqueta, muestra progreso, anuncia estado busy y
+  bloquea reintentos. Cancelar vuelve a la pantalla sin alerta; red o indisponibilidad usan mensajes
+  públicos sin códigos OAuth.
+- El botón conserva la variante oscura aprobada (`#131314`, borde `#8E918F`, texto `#E3E3E3`), la
+  “G” oficial sin recolorear y las separaciones indicadas por Google. Las demás piezas usan
+  Manrope y tokens propios.
+- El navegador seguro, Authorization Code + PKCE, Credentials Manager, restauración, refresh y
+  logout siguen perteneciendo a Auth0; la app no recibe la contraseña de Google.
 
 ### Tabs autenticadas
 
@@ -163,3 +183,10 @@ tokens o detalles internos.
 - El monograma es temporal; no iniciar branding definitivo sin un plan autorizado.
 - No agregar blur, navegación nueva, animaciones decorativas intensas ni librerías de UI fuera del
   execution plan activo.
+
+## Procedencia de marca externa
+
+El asset del botón Google y su uso están registrados en
+[`apps/mobile/assets/brand/README.md`](../../apps/mobile/assets/brand/README.md). Es una marca del
+proveedor usada solo para identificar la acción de acceso; no forma parte del logo temporal ni del
+futuro branding de Copiloto Financiero.

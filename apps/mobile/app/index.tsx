@@ -1,13 +1,16 @@
 import { ActivityIndicator, StyleSheet, Text, View } from 'react-native';
 
+import { getLoginScreenModel, LOGIN_SCREEN_COPY } from '../src/application/login-screen-model';
 import { useMobileApp } from '../src/application/mobile-app-provider';
 import { getSessionPresentation } from '../src/application/mobile-app-view-model';
-import { AppButton, AppCard, AppScreen, BrandMark, FeedbackCard } from '../src/ui/components';
+import { AppScreen, BrandMark, FeedbackCard } from '../src/ui/components';
+import { GoogleAuthButton } from '../src/ui/google-auth-button';
 import { colors, fontFamilies, spacing } from '../src/ui/theme';
 
 export default function SessionGateScreen() {
   const { authenticationAvailable, login, session } = useMobileApp();
   const presentation = getSessionPresentation(session.status, session.message);
+  const loginScreen = getLoginScreenModel(session.status, authenticationAvailable, session.message);
 
   if (session.status === 'restoring') {
     return (
@@ -22,48 +25,44 @@ export default function SessionGateScreen() {
     );
   }
 
-  const authenticating = session.status === 'authenticating';
-
   return (
     <AppScreen contentStyle={styles.accessContent} safeBottom>
       <View style={styles.hero}>
         <BrandMark size={68} />
         <View style={styles.heroCopy}>
-          <Text style={styles.eyebrow}>FASE 2 · IDENTIDAD</Text>
-          <Text style={styles.title}>Copiloto Financiero</Text>
-          <Text style={styles.description}>
-            Un espacio seguro para organizar tu hogar. Todavía no hay funciones financieras en esta
-            pantalla.
+          <Text style={styles.eyebrow}>{LOGIN_SCREEN_COPY.brand}</Text>
+          <Text accessibilityRole="header" style={styles.title}>
+            {LOGIN_SCREEN_COPY.title}
           </Text>
+          <Text style={styles.description}>{LOGIN_SCREEN_COPY.description}</Text>
         </View>
       </View>
 
-      <AppCard style={styles.accessCard}>
-        <FeedbackCard
-          message={presentation.description}
-          title={presentation.title}
-          tone={presentation.tone}
-        />
-        <AppButton
-          disabled={!authenticationAvailable}
-          icon="log-in-outline"
-          label={authenticating ? 'Abriendo acceso seguro…' : 'Iniciar sesión'}
-          loading={authenticating}
+      <View style={styles.accessPanel}>
+        <View style={styles.securityCopy}>
+          <Text style={styles.securityTitle}>{LOGIN_SCREEN_COPY.securityTitle}</Text>
+          <Text style={styles.securityDescription}>{LOGIN_SCREEN_COPY.securityDescription}</Text>
+        </View>
+        {loginScreen.feedback === undefined ? null : (
+          <FeedbackCard
+            message={loginScreen.feedback.description}
+            title={loginScreen.feedback.title}
+            tone={loginScreen.feedback.tone}
+          />
+        )}
+        <GoogleAuthButton
+          disabled={loginScreen.disabled}
+          label={loginScreen.action.label}
+          loading={loginScreen.loading}
           onPress={login}
         />
-        {!authenticationAvailable ? (
-          <Text style={styles.developmentNote}>
-            La autenticación real está disponible en un development build de Android o iOS con las
-            variables locales de Auth0 configuradas.
-          </Text>
-        ) : null}
-      </AppCard>
+      </View>
     </AppScreen>
   );
 }
 
 const styles = StyleSheet.create({
-  accessCard: {
+  accessPanel: {
     gap: spacing.md,
   },
   accessContent: {
@@ -83,13 +82,6 @@ const styles = StyleSheet.create({
     fontFamily: fontFamilies.regular,
     fontSize: 17,
     lineHeight: 27,
-  },
-  developmentNote: {
-    color: colors.textSubtle,
-    fontFamily: fontFamilies.regular,
-    fontSize: 12,
-    lineHeight: 18,
-    textAlign: 'center',
   },
   eyebrow: {
     color: colors.accentCyan,
@@ -115,6 +107,24 @@ const styles = StyleSheet.create({
     color: colors.text,
     fontFamily: fontFamilies.semibold,
     fontSize: 20,
+  },
+  securityCopy: {
+    borderLeftColor: colors.accentCyan,
+    borderLeftWidth: 2,
+    gap: 4,
+    paddingLeft: spacing.sm,
+  },
+  securityDescription: {
+    color: colors.textMuted,
+    fontFamily: fontFamilies.regular,
+    fontSize: 13,
+    lineHeight: 20,
+  },
+  securityTitle: {
+    color: colors.text,
+    fontFamily: fontFamilies.semibold,
+    fontSize: 14,
+    lineHeight: 20,
   },
   title: {
     color: colors.text,

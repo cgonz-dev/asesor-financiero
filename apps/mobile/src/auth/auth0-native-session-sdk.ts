@@ -10,6 +10,7 @@ import type { Auth0Configuration } from '../config';
 import { type AuthSessionSdk, type SessionCredentials, SessionSdkError } from './auth-session-sdk';
 
 const AUTH0_SCOPE = 'openid profile email offline_access';
+const AUTH0_GOOGLE_CONNECTION = 'google-oauth2';
 const MINIMUM_ACCESS_TOKEN_TTL_SECONDS = 30;
 const SAFE_AUTH0_ERROR_CODE = /^[A-Za-z0-9._-]{1,80}$/;
 
@@ -84,6 +85,7 @@ export class Auth0NativeSessionSdk implements AuthSessionSdk {
       const credentials = await this.client.webAuth.authorize(
         {
           audience: this.configuration.audience,
+          connection: AUTH0_GOOGLE_CONNECTION,
           scope: AUTH0_SCOPE,
         },
         { customScheme: this.configuration.customScheme },

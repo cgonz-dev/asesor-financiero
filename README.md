@@ -12,12 +12,12 @@ estructuradas y explicaciones útiles, sin convertir a la IA en fuente de verdad
 - **Fase 1 cerrada:** bootstrap reproducible, health contractual, OpenAPI, cliente móvil mínimo,
   CI inicial y modo LAN completados y verificados.
 - La ejecución real de GitHub Actions terminó correctamente en verde.
-- **Fase 2 iniciada, pero no terminada.** Las Historias 1 a 5 están completadas. Su cierre formal
-  espera la validación manual pendiente con una segunda identidad/dispositivo.
+- **Fase 2 cerrada:** las Historias 1 a 6, las validaciones Android de invitaciones y acceso
+  Google-only, y la matriz completa fueron revisadas formalmente en verde. Fase 3 no ha iniciado.
 - Existe código no financiero para API, móvil, contratos, dominio mínimo y persistencia PostgreSQL.
 - Existen invitaciones dirigidas, opacas, expirables, revocables y de un solo uso. La aceptación con
-  una segunda identidad/dispositivo real continúa como deuda de validación manual; no se afirma que
-  haya sido validada manualmente.
+  una segunda identidad/dispositivo Android fue validada después de conectar la Post Login Action
+  al Login Flow de Auth0.
 - No existen administración avanzada de integrantes, ledger, operaciones monetarias ni integración
   de IA.
 - ADR-001, ADR-005, ADR-006 y ADR-007 permanecen aceptados.
@@ -211,12 +211,13 @@ No se debe guardar una IP personal, token o secreto en archivos versionados.
 
 ## Auth0 de desarrollo y development build
 
-La autenticación móvil real no funciona en Expo Go ni en Expo Web porque usa módulos nativos. El
-SDK abre Universal Login en el navegador seguro del sistema con Authorization Code + PKCE S256 y
-administra/verifica `state` y `nonce`; no usa WebView embebido. El Credentials Manager protege la
-credencial renovable mediante iOS Keychain o Android Keystore. La API solo acepta un access token
-dirigido a su audience. Nunca uses el ID token, un client secret o un `userId` del cliente como
-autenticación.
+La autenticación móvil real no funciona en Expo Go ni en Expo Web porque usa módulos nativos. La
+pantalla propia ofrece únicamente `Continuar con Google`; al pulsarlo, el SDK abre el navegador
+seguro del sistema y solicita a Auth0 la conexión fija `google-oauth2`. Auth0 conserva Authorization
+Code + PKCE S256, `state`, `nonce`, tokens, refresh y logout; no se usa una WebView embebida y la app
+nunca recibe la contraseña de Google. El Credentials Manager protege la credencial renovable
+mediante iOS Keychain o Android Keystore. La API solo acepta un access token dirigido a su
+audience. Nunca uses el ID token, un client secret o un `userId` del cliente como autenticación.
 
 ### Configuración manual del Dashboard
 
@@ -242,9 +243,11 @@ Usa un tenant exclusivo de desarrollo, sin personas ni datos reales:
    refresh token de 7 días, máximo absoluto de 30 días y overlap de rotación de 3 segundos. Es una
    política inicial revisable, no una garantía legal o definitiva; el código no duplica ni
    sobreescribe estas duraciones del tenant.
-6. Habilita una Database Connection y Google únicamente para esta Native Application. Configura
-   Google con credenciales de desarrollo propias; no pegues secretos en el repositorio. Magic links
-   y Apple permanecen deshabilitados en esta historia.
+6. Habilita únicamente la conexión social de Google para esta Native Application y confirma que su
+   nombre interno sea exactamente `google-oauth2`. Deshabilita la Database Connection para este
+   cliente —sin eliminarla del tenant si otro cliente legítimo la necesita—. Configura Google con
+   credenciales de desarrollo propias; no pegues secretos en el repositorio. Apple, email/password,
+   magic links, passwordless y passkeys permanecen fuera de esta versión.
 7. Crea y despliega una **Post Login Action** que añada al access token de esta API el correo y su
    estado de verificación en los claims `<AUDIENCE-SIN-DIAGONAL-FINAL>/email` y
    `<AUDIENCE-SIN-DIAGONAL-FINAL>/email_verified`. Los valores deben provenir de `event.user.email`
@@ -341,6 +344,17 @@ El cierre de Historia 2 validó en un Android real los accesos por Google y Data
 consulta de `/me`, la restauración después de cerrar completamente la app, el logout, la reapertura
 sin restaurar la sesión cerrada y un nuevo login. La revocación remota del proveedor continúa siendo
 best effort; el cierre local y la limpieza de credenciales no dependen de ella.
+
+Historia 6 conserva ese ciclo de sesión, pero fija Google como única conexión del acceso actual. La
+pantalla propia no recibe correo ni contraseña y no implementa un SDK de Google directo: Auth0
+sigue siendo el broker OAuth/OIDC. La validación en Android real confirmó que:
+
+1. solo aparece `Continuar con Google`, con TalkBack, texto ampliado y Reduce Motion correctos;
+2. el navegador llega directamente a Google, cancelar vuelve estable y un doble toque no duplica
+   el flujo;
+3. login, `/me`, restauración, renovación, logout y relogin permanecen funcionales;
+4. después del logout la sesión cerrada no se restaura y un nuevo login funciona;
+5. no aparece email/password ni el selector genérico de conexiones de Auth0.
 
 ## Households autenticados
 
@@ -581,7 +595,5 @@ Antes de modificar el proyecto:
 
 ## Próximo paso recomendado
 
-Completar y registrar la validación manual de una invitación con segunda identidad/dispositivo.
-Después corresponde revisar formalmente el cierre de Fase 2 y preparar el spike de RLS exigido por
-ADR-006 antes de cualquier tabla financiera de Fase 3. No iniciar Fase 3 mientras esos gates sigan
-pendientes.
+Planear y ejecutar el spike de RLS exigido por ADR-006 antes de cualquier tabla financiera de Fase
+3. No iniciar Fase 3 mientras ese gate siga pendiente.

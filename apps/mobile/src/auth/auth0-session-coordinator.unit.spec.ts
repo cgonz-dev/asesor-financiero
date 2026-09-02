@@ -138,6 +138,56 @@ describe('Auth0SessionCoordinator', () => {
     });
   });
 
+  it('returns quietly to the Google access screen when the user cancels', async () => {
+    const coordinator = new Auth0SessionCoordinator(
+      fakeSdk({
+        authorize: vi.fn(async () => {
+          throw new SessionSdkError('cancelled');
+        }),
+      }),
+    );
+
+    await coordinator.login(async () => PROFILE);
+
+    expect(coordinator.currentSnapshot()).toEqual({ status: 'unauthenticated' });
+  });
+
+  it('shows a safe retryable message when the Google flow has no network', async () => {
+    const coordinator = new Auth0SessionCoordinator(
+      fakeSdk({
+        authorize: vi.fn(async () => {
+          throw new SessionSdkError('network');
+        }),
+      }),
+    );
+
+    await coordinator.login(async () => PROFILE);
+
+    expect(coordinator.currentSnapshot()).toEqual({
+      message: 'No pudimos validar la sesión por un problema de red.',
+      status: 'error',
+    });
+  });
+
+  it('does not expose provider details when Google authentication is unavailable', async () => {
+    const coordinator = new Auth0SessionCoordinator(
+      fakeSdk({
+        authorize: vi.fn(async () => {
+          throw new SessionSdkError('unavailable', {
+            cause: new Error('oauth_error=internal tenant detail'),
+          });
+        }),
+      }),
+    );
+
+    await coordinator.login(async () => PROFILE);
+
+    expect(coordinator.currentSnapshot()).toEqual({
+      message: 'No pudimos completar la autenticación de forma segura.',
+      status: 'error',
+    });
+  });
+
   it('reports visible progress and success while refreshing the internal profile', async () => {
     const coordinator = new Auth0SessionCoordinator(fakeSdk());
     await coordinator.login(async () => PROFILE);

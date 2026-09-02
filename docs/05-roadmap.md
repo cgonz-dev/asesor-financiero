@@ -172,11 +172,10 @@ Autenticación real, tablas financieras, ledger, pantallas de producto, IA y des
 
 ### Estado
 
-**Iniciada el 14 de agosto de 2026; no cerrada.** Las Historias 1 a 5 están completadas. La
-aceptación de una invitación con una segunda identidad/dispositivo real permanece como deuda de
-validación manual y no se afirma como evidencia ejecutada. Por ello todavía no se recomienda el
-cierre formal de la fase. Recursos financieros, administración avanzada de integrantes y RLS no se
-han iniciado.
+**Cerrada formalmente el 2 de septiembre de 2026.** Las Historias 1 a 6, la aceptación de una
+invitación con una segunda identidad/dispositivo Android, la validación manual Google-only y la
+matriz automática completa están satisfechas. Recursos financieros, administración avanzada de
+integrantes y RLS no se han iniciado.
 
 ### Evidencia de Historia 1
 
@@ -233,7 +232,7 @@ han iniciado.
   estado vacío, creación del primer y segundo Household, listado, cambio de selección, persistencia
   tras cerrar/reabrir, consulta de perfil y sesión activa.
 
-### Evidencia de Historia 4 — completada; deuda de validación manual registrada
+### Evidencia de Historia 4 — completada, incluida validación manual
 
 - `HouseholdInvitation` separado de membership, migración versionada, hash SHA-256 único de un
   token CSPRNG de 256 bits, expiración configurable y constraints de integridad;
@@ -248,8 +247,10 @@ han iniciado.
 - auditoría mínima `invitation.created`, `invitation.revoked` e `invitation.accepted`, sin secreto,
   hash o correo;
 - contratos Zod, OpenAPI, cliente móvil y pantalla mínima Owner/invitado implementados;
-- pendiente para cerrar: prueba real de dos cuentas Android, incorporación visible, prohibición
-  administrativa de Member y rechazo de un token revocado.
+- la aceptación dirigida se validó manualmente con una segunda identidad/dispositivo Android; la
+  Post Login Action de Auth0 se conectó al Login Flow para emitir los claims de correo verificado y
+  la invitación vigente pudo aceptarse correctamente. Expiración, revocación, reutilización y
+  prohibición administrativa de Member conservan cobertura automatizada.
 
 ### Ajuste transversal de UX móvil de Fase 2 — implementado el 26 de agosto de 2026
 
@@ -263,8 +264,7 @@ han iniciado.
   decisión final; no se modificaron contratos, endpoints, persistencia ni políticas;
 - el código crudo de invitación nunca entra a parámetros de ruta y se elimina al compartir o cerrar
   su modal;
-- este ajuste mejora la validación y usabilidad de Historia 4, pero no sustituye la prueba manual
-  pendiente con dos identidades Android.
+- este ajuste permitió completar posteriormente la prueba manual con dos identidades Android.
 
 ### Evidencia de Historia 5 — completada el 27 de agosto de 2026
 
@@ -281,8 +281,46 @@ han iniciado.
 - no cambiaron schema Prisma, migraciones, contratos, OpenAPI, endpoints ni mobile;
 - matriz automatizada final: 183 pruebas en 33 archivos, Expo Doctor 21/21 y verification harness
   en verde;
-- la Historia 5 está completa, pero Fase 2 permanece abierta hasta registrar la validación manual
-  pendiente con una segunda identidad/dispositivo y realizar la revisión formal de cierre.
+- la Historia 5 está completa; su recomendación de cierre fue reevaluada después de completar las
+  validaciones manuales de Historias 4 y 6.
+
+### Historia 6 — completada el 2 de septiembre de 2026
+
+- pantalla propia de Copiloto Financiero para acceso, preservando dark mode, Manrope, gradientes,
+  componentes, animaciones y Reduce Motion;
+- una sola acción visible, `Continuar con Google`, con branding oficial y accesible;
+- Auth0 conserva OAuth/OIDC, Authorization Code + PKCE, navegador seguro, audience, tokens,
+  Credentials Manager, refresh y logout;
+- conexión `google-oauth2` directa para evitar el selector genérico de Universal Login en el camino
+  normal, con Google como única conexión habilitada para esta Native Application;
+- pruebas enfocadas cubren parámetros exactos del adaptador, ausencia de fallback, presentación con
+  una sola acción, cancelación, red, error seguro y bloqueo de doble toque;
+- `pnpm verify` y `pnpm verify:full` aprobaron; la matriz completa suma 195 pruebas en 37 archivos,
+  Expo Doctor 21/21, build, OpenAPI, peers, migraciones y diff en verde;
+- Auth0 se verificó con únicamente Google habilitado para esta Native Application y la Post Login
+  Action conectada;
+- Android real confirmó login, cancelación, reintento, restauración, logout sin restauración
+  posterior y nuevo login, sin email/password ni selector genérico de conexiones;
+- la reverificación del 2 de septiembre determinó que la prueba fijaba una expiración histórica
+  pero dejaba `createdAt` al reloj actual, activando primero el `check_violation` PostgreSQL `23514`
+  expuesto por Prisma como `P2039`; al controlar ambos timestamps, la prueba valida nuevamente la
+  unicidad `P2002` y la relación cruzada `P2003` esperadas;
+- la prueba afectada aprobó 9/9 y `pnpm verify:full` aprobó 195/195 en 37 archivos, con
+  migraciones, lint, formato, typecheck, builds, OpenAPI, peers, Expo Doctor 21/21 y diff en verde;
+- sin Apple, email/password, passkeys, MFA nuevo, backend, Household, finanzas, ledger, IA, RLS o
+  Fase 3;
+- el [plan y la evidencia](exec-plans/completed/phase-2-story-6.md) están archivados; la revisión
+  formal de Fase 2 confirmó el cierre y no inicia Fase 3.
+
+### Cierre formal de Fase 2 — completado el 2 de septiembre de 2026
+
+- revisión independiente de las Historias 1 a 6, Definition of Done, ADR-005, ADR-006, seguridad,
+  privacidad, accesibilidad y trabajo diferido;
+- instalación congelada y `pnpm verify:full` aprobados: dos migraciones al día, 195/195 pruebas en
+  37 archivos, builds, OpenAPI, peers, Expo Doctor 21/21 y diff en verde;
+- sin cambios de contrato, OpenAPI, schema Prisma o migraciones fuera de la evidencia ya revisada;
+- el spike de RLS previo a las primeras tablas financieras sigue siendo obligatorio y se planeará
+  por separado antes de iniciar Fase 3.
 
 ### Objetivo
 
@@ -305,12 +343,15 @@ Establecer identidad, aislamiento por hogar y permisos antes de almacenar finanz
   interna mediante una API que valide el access token. **Completada en Historia 2.**
 - Como usuario, quiero crear, consultar y seleccionar sus hogares autorizados. **Completada en
   Historia 3.**
-- Como usuario, quiero invitar a mi pareja con control explícito. **Completada en Historia 4; la
-  validación manual con segunda identidad/dispositivo permanece registrada como deuda.**
+- Como usuario, quiero invitar a mi pareja con control explícito. **Completada en Historia 4,
+  incluida la validación manual con segunda identidad/dispositivo Android.**
 - Como integrante, quiero que mis recursos personales respeten visibilidad. **Policy pura
   completada en Historia 5; se conectará al introducir cada recurso real en su fase.**
 - Como sistema, quiero rechazar todo acceso cruzado entre hogares. **Completada para el alcance no
   financiero de Fase 2 en Historia 5.**
+- Como usuario móvil, quiero continuar únicamente con Google desde una pantalla propia sin que la
+  app maneje mi contraseña. **Validada en Android real y con matriz automática completa verde en
+  Historia 6.**
 
 ### Dependencias
 

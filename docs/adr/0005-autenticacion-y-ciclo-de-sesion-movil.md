@@ -914,6 +914,26 @@ Si se cambia de proveedor después de implementar:
 - el proveedor anterior se retirará solo después de verificar accesos, exportación y eliminación;
 - un ADR sustituto documentará la migración y sus riesgos.
 
+## Nota de implementación — 2026-08-28
+
+Fase 2 — Historia 6 aplica una restricción de producto a la versión móvil actual sin cambiar la
+decisión arquitectónica de este ADR:
+
+- la pantalla propia presenta únicamente `Continuar con Google`;
+- `react-native-auth0` abre el navegador seguro con la conexión interna fija
+  `google-oauth2`; la UI no puede escoger ni sobrescribirla;
+- Auth0 continúa ejecutando OAuth/OIDC Authorization Code + PKCE, `state`, `nonce`, audience,
+  emisión/renovación de tokens, Credentials Manager y logout;
+- la app no recibe ni administra la contraseña de Google y no integra un SDK Google directo;
+- email/password queda deshabilitado para esta Native Application y diferido, junto con Apple,
+  passwordless, passkeys y MFA nuevo; esto no elimina su evaluación histórica ni decide una versión
+  futura;
+- la Post Login Action de correo verificado permanece en el Login Flow porque limita la aceptación
+  de invitaciones dirigidas sin convertir el correo en identificador o autorización.
+
+La implementación automática está cubierta por pruebas; la historia permanece abierta hasta
+confirmar en Android real la configuración Google-only del tenant y el ciclo completo de sesión.
+
 ## Referencias oficiales
 
 Todas las fuentes externas se consultaron el **2026-07-31**.
