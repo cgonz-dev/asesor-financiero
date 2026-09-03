@@ -35,7 +35,7 @@ describe('Auth0 access-token boundary and GET /api/v1/me', () => {
       docs: false,
       logger: ['error'],
     });
-    await app.init();
+    await app.listen(0, '127.0.0.1');
   });
 
   beforeEach(async () => {

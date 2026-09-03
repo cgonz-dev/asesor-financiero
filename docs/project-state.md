@@ -117,6 +117,16 @@ Spike PostgreSQL RLS ejecutado el 2 de septiembre de 2026:
 - el harness es efímero y no alteró schema Prisma, migraciones, endpoints ni datos funcionales;
 - resultado: `ADOPT WITH CONSTRAINTS`, aceptado formalmente el 3 de septiembre de 2026.
 
+Estabilización de CI ejecutada el 3 de septiembre de 2026:
+
+- el `ECONNRESET` intermitente no provenía de Auth0 ni de la API: Supertest abría automáticamente un
+  servidor no enlazado y la primera petición concurrente podía cerrarlo mientras otras seguían
+  activas;
+- las cinco suites E2E ahora enlazan su aplicación Nest una sola vez a un puerto efímero y la
+  cierran al terminar;
+- la suite afectada aprobó 10 repeticiones consecutivas (70/70), `pnpm test:e2e` aprobó 26/26 y
+  `pnpm verify:full` volvió a aprobar la matriz completa de 195/195.
+
 La interfaz reutilizable de verificación se documenta en
 [`docs/exec-plans/README.md`](exec-plans/README.md).
 

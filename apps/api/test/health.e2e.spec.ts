@@ -17,7 +17,7 @@ describe('GET /api/v1/health', () => {
       databaseUrl: UNAVAILABLE_DATABASE_URL,
       docs: false,
     });
-    await app.init();
+    await app.listen(0, '127.0.0.1');
   });
 
   afterAll(async () => {

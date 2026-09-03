@@ -34,7 +34,7 @@ describe('Authenticated Household HTTP boundary', () => {
       docs: false,
       logger: ['error'],
     });
-    await app.init();
+    await app.listen(0, '127.0.0.1');
   });
 
   beforeEach(async () => {

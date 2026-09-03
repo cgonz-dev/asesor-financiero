@@ -25,7 +25,7 @@ describe('GET /api/v1/readiness', () => {
         logger: ['error'],
       }),
     ]);
-    await Promise.all([readyApp.init(), unavailableApp.init()]);
+    await Promise.all([readyApp.listen(0, '127.0.0.1'), unavailableApp.listen(0, '127.0.0.1')]);
   });
 
   afterAll(async () => {

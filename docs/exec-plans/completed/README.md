@@ -25,7 +25,10 @@ Planes completados bajo Harness 1.0:
   `ADOPT WITH CONSTRAINTS` sin iniciar Fase 3.
 - [Revocación concurrente de memberships bajo RLS](pre-phase-3-rls-membership-revocation.md):
   semántica `READ COMMITTED`, carrera intra-statement y serialización de escrituras con `FOR SHARE`;
-  ADR-021 queda listo para revisión, pero todavía Propuesto.
+  evidencia que permitió aceptar ADR-021 con `ADOPT WITH CONSTRAINTS`.
+- [Mantenimiento CI — ciclo de vida estable del servidor E2E](ci-supertest-server-lifecycle.md):
+  elimina el `ECONNRESET` de Supertest al mantener cada servidor Nest enlazado durante toda su
+  suite.
 
 La aceptación de invitaciones con una segunda identidad/dispositivo fue validada manualmente en
 Android real. La evidencia se registra en el estado del proyecto sin incluir datos sensibles.
