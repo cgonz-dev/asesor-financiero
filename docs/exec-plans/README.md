@@ -33,6 +33,10 @@ Un plan no sustituye:
   typecheck, pruebas unitarias, build, OpenAPI, peer dependencies, Expo Doctor y diff whitespace.
 - `pnpm verify:full`: añade migraciones/estado de Prisma y las suites general, integración y E2E;
   requiere PostgreSQL local o el servicio efímero de CI con `DATABASE_URL` permitida por los tests.
+- `pnpm test:rls:direct` y `pnpm test:rls:pooler`: gates adicionales del spike previo a Fase 3;
+  levantan PostgreSQL 18.4/PgBouncer desechables mediante Docker, autentican roles PostgreSQL
+  reales, prueban aislamiento y revocación concurrente de memberships, y eliminan sus contenedores,
+  volúmenes, roles y schema al terminar.
 
 Expo Doctor se ejecuta con una versión fijada y contra el mapa de compatibilidad incluido en el
 SDK instalado. Así, un parche publicado posteriormente en el registro no cambia por sí solo el

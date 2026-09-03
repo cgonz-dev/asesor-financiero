@@ -3,10 +3,11 @@
   "version": "0.1.0",
   "private": true,
   "scripts": {
-    "build": "prisma generate && nest build",
-    "dev": "prisma generate && nest start --watch",
+    "build": "pnpm db:generate && nest build",
+    "db:generate": "prisma generate && prisma generate --schema test/rls/prisma/schema.prisma",
+    "dev": "pnpm db:generate && nest start --watch",
     "start": "node dist/main.js",
-    "typecheck": "prisma generate && tsc -p tsconfig.json --noEmit",
+    "typecheck": "pnpm db:generate && tsc -p tsconfig.json --noEmit",
     "openapi:generate": "pnpm build && node dist/cli/openapi.js generate",
     "openapi:check": "pnpm build && node dist/cli/openapi.js check"
   },

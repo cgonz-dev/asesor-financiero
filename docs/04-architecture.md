@@ -7,8 +7,10 @@ reproducible, CI inicial y modo LAN quedaron validados en Fase 1. Fase 2 impleme
 Prisma, identidad interna, hogares y memberships, Auth0/sesión móvil, invitaciones dirigidas,
 policies de visibilidad y auditoría atómica, más el acceso Google-only. Las validaciones Android de
 invitaciones con segunda identidad y del ciclo Google-only están registradas, junto con la matriz
-completa verde. Administración avanzada de integrantes, recursos financieros y RLS permanecen
-fuera de Fase 2; el spike de RLS es un gate previo a Fase 3.
+completa verde. Administración avanzada de integrantes y recursos financieros permanecen fuera de
+Fase 2. [ADR-021](adr/0021-postgresql-rls-para-aislamiento-multi-household.md) fue aceptado como
+`ADOPT WITH CONSTRAINTS`: el gate de RLS previo a Fase 3 está desbloqueado. Fase 3 continúa sin
+iniciar hasta resolver los demás ADR requeridos.
 
 ## Objetivos arquitectónicos
 
@@ -155,9 +157,10 @@ Household y los tres eventos de invitación implementados; no sustituye el dise�
 de ADR-019.
 
 Prisma, sus repositorios y las transacciones viven en `apps/api`; `packages/domain` no importa
-NestJS ni Prisma. El desarrollo local usa `prisma dev` porque el motor Docker disponible no estaba
-operativo durante la implementación. CI usa PostgreSQL real efímero y aplica solo migraciones
-versionadas.
+NestJS ni Prisma. El desarrollo ordinario puede usar `prisma dev`, pero no constituye evidencia
+válida de RLS porque no reproduce de forma fiable conexiones con roles PostgreSQL físicos
+separados. El gate de RLS usa PostgreSQL real efímero y roles autenticados; CI aplica solo
+migraciones versionadas.
 
 Para fases posteriores se prevén, sin que sean tablas definitivas todavía:
 
@@ -177,6 +180,45 @@ Para fases posteriores se prevén, sin que sean tablas definitivas todavía:
 
 Esta lista futura identifica conceptos, no tablas definitivas. Normalización, historización, claves,
 índices y retención necesitan diseño/ADR antes de implementarse.
+
+## Gate de PostgreSQL RLS previo a Fase 3
+
+El spike aislado de [ADR-021](adr/0021-postgresql-rls-para-aislamiento-multi-household.md) validó
+PostgreSQL 18.4, Prisma/adapter 7.9.1, `pg` 8.23.0 y PgBouncer 1.25.2 en modo transaccional sin
+modificar el schema o las migraciones funcionales. La decisión aceptada es adoptar RLS solo
+como defensa en profundidad y con estas fronteras obligatorias:
+
+```text
+Request autenticado y autorizado por la aplicación
+  └─ withRlsContext(actorUserId, householdId, intent)
+       └─ interactive transaction READ COMMITTED / set_config(..., true)
+            ├─ read: transacción read-only
+            ├─ write: revalidación + HouseholdMembership FOR SHARE
+            └─ repositorios reciben únicamente TransactionClient
+                 └─ runtime PostgreSQL no-owner + NOBYPASSRLS
+                      └─ tablas con ENABLE + FORCE RLS
+```
+
+- La aplicación conserva roles, capabilities, propiedad y visibilidad; RLS solo refuerza el
+  aislamiento por hogar y membership activa.
+- Un owner `NOLOGIN` posee tablas/functions, el runtime API y cada clase de job usan roles físicos
+  separados y el administrador queda fuera del tráfico ordinario.
+- Sin contexto la policy deniega. El contexto nunca es de sesión: se aplica localmente a una sola
+  transacción y conexión.
+- Una revocación confirmada se observa en el siguiente statement bajo `READ COMMITTED`. Las
+  escrituras adquieren primero `FOR SHARE` sobre la membership activa: operación y revocación
+  quedan ordenadas, sin una ventana TOCTOU ni commits lógicamente posteriores a perder acceso.
+- `REPEATABLE READ`, `SERIALIZABLE`, una revalidación sin lock y una constraint adicional no
+  sustituyen esta garantía. Las transacciones financieras deberán ser breves y no incluir red, IA,
+  espera de usuario o cálculo prolongado.
+- FKs y unicidades tenant-locales incluyen `household_id`; constraints globales pueden revelar
+  colisiones al margen de RLS.
+- El gate directo y el de PgBouncer son controles adicionales de CI. `pnpm verify:full` permanece
+  reproducible con PostgreSQL local sin exigir Docker anidado.
+
+Las suites finales aprobaron 26/26 casos directos y 9/9 detrás de PgBouncer, incluidos commit,
+rollback, timeout y reutilización del backend. ADR-021 está **Aceptado**. La decisión no activa
+todavía RLS productivo, tablas financieras ni el inicio de Fase 3.
 
 ## Ruta de una escritura financiera
 
@@ -449,10 +491,12 @@ artefacto OpenAPI versionado permanezca actualizado. No despliega ni publica art
 | ADR-018 | Clasificación/retención, exportación y eliminación de datos | Antes de beta | Pendiente |
 | ADR-019 | Observabilidad, auditoría y redacción de datos sensibles | Fase 3; completar antes de beta | Pendiente |
 | ADR-020 | Backups, restauración, RPO/RTO y continuidad | Antes de beta | Pendiente |
+| [ADR-021](adr/0021-postgresql-rls-para-aislamiento-multi-household.md) | PostgreSQL RLS para aislamiento multi-household | Fase 3 | Aceptado — `ADOPT WITH CONSTRAINTS` |
 
-ADR-001, ADR-005, ADR-006 y ADR-007 están aceptados. Las Historias 1 a 6 de Fase 2, la validación
+ADR-001, ADR-005, ADR-006, ADR-007 y ADR-021 están aceptados. Las Historias 1 a 6 de Fase 2, la validación
 Android con segunda identidad y la validación manual Google-only están completadas; la matriz
 `verify:full` está verde y Fase 2 está cerrada formalmente. Esto no amplía el alcance a
 administración avanzada de integrantes, RLS ni historias financieras. El spike de RLS requerido por
-ADR-006 permanece como gate previo a Fase 3. Los demás IDs son reservas de trabajo hasta que exista
-contexto, alternativas y una decisión revisable.
+ADR-006 fue aceptado mediante ADR-021. Fase 3 permanece sin iniciar hasta resolver los demás ADR
+requeridos; los demás IDs son reservas de trabajo hasta que exista contexto, alternativas y una
+decisión revisable.

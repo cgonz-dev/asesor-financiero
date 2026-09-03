@@ -15,6 +15,7 @@ export default defineConfig({
     environment: 'node',
     fileParallelism: false,
     include: ['tests/**/*.integration.spec.ts', 'apps/api/test/**/*.integration.spec.ts'],
+    exclude: ['apps/api/test/rls-*.integration.spec.ts'],
     setupFiles: ['./tests/setup-environment.ts'],
   },
 });

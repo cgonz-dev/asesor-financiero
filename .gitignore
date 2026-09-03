@@ -8,6 +8,7 @@ coverage/
 web-build/
 *.tsbuildinfo
 apps/api/src/generated/prisma/
+apps/api/src/generated/rls-probe/
 apps/mobile/android/
 apps/mobile/ios/
 

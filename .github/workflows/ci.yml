@@ -18,7 +18,7 @@ jobs:
   validate:
     name: Validate workspace
     runs-on: ubuntu-latest
-    timeout-minutes: 20
+    timeout-minutes: 35
     env:
       DATABASE_URL: postgresql://copiloto_ci:copiloto_ci_password@127.0.0.1:5432/copiloto_financiero_ci?schema=public
 
@@ -64,6 +64,12 @@ jobs:
 
       - name: Check database migration status
         run: pnpm db:status
+
+      - name: Verify RLS with direct PostgreSQL pooling
+        run: pnpm test:rls:direct
+
+      - name: Verify RLS with PgBouncer transaction pooling
+        run: pnpm test:rls:pooler
 
       - name: Lint
         run: pnpm lint

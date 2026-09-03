@@ -38,7 +38,11 @@ Un ADR aceptado no se reescribe para ocultar el pasado. Una decisión nueva lo s
 - Referencias: enlazar fase, historias, documentos, contratos y ADR relacionados.
 - Idioma: español; términos de código se documentan según [ADR-001](0001-idioma-y-vocabulario-canonico.md).
 
-Los IDs ADR-001 a ADR-020 usados en la documentación corresponden a archivos `0001` a `0020`. ADR-001, ADR-005, ADR-006 y ADR-007 están aceptados; la aceptación de ADR-006 no inicia Fase 2; los demás IDs permanecen reservados hasta que exista contexto, alternativas y una decisión revisable.
+Los ADR materializados usan el ID de cuatro dígitos en su nombre de archivo. ADR-001, ADR-005,
+ADR-006, ADR-007 y ADR-021 están aceptados. ADR-021 adopta RLS como defensa en profundidad con
+restricciones obligatorias; no inicia Fase 3 ni sustituye los ADR financieros todavía pendientes.
+Los IDs sin archivo permanecen reservados hasta que exista contexto, alternativas y una decisión
+revisable.
 
 ## Proceso
 
@@ -78,6 +82,7 @@ Una decisión que afecte saldos, auditoría, seguridad o privacidad requiere con
 | 018 | Clasificación, retención, exportación y eliminación de datos | Antes de beta | Pendiente |
 | 019 | Observabilidad, auditoría y redacción | Baseline antes de Fase 3; completar antes de beta | Pendiente |
 | 020 | Backups, restauración, RPO/RTO y continuidad | Antes de beta | Pendiente |
+| [021](0021-postgresql-rls-para-aislamiento-multi-household.md) | PostgreSQL RLS para aislamiento multi-household | Antes de Fase 3 | Aceptado — `ADOPT WITH CONSTRAINTS` |
 
 La fuente resumida de fase límite es [`04-architecture.md`](../04-architecture.md). Al crear o cambiar un ADR, ambas tablas deben permanecer coherentes.
 

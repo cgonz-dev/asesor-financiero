@@ -319,8 +319,23 @@ integrantes y RLS no se han iniciado.
 - instalación congelada y `pnpm verify:full` aprobados: dos migraciones al día, 195/195 pruebas en
   37 archivos, builds, OpenAPI, peers, Expo Doctor 21/21 y diff en verde;
 - sin cambios de contrato, OpenAPI, schema Prisma o migraciones fuera de la evidencia ya revisada;
-- el spike de RLS previo a las primeras tablas financieras sigue siendo obligatorio y se planeará
-  por separado antes de iniciar Fase 3.
+- el gate de RLS previo a las primeras tablas financieras fue cerrado y aceptado mediante ADR-021;
+  no inició Fase 3.
+
+### Gate previo a Fase 3 — PostgreSQL RLS aceptado el 3 de septiembre de 2026
+
+- harness aislado sobre PostgreSQL 18.4 con roles owner/runtime/job separados, `ENABLE` + `FORCE
+  RLS`, contexto transaccional, membership activa, constraints compuestas y fail-closed;
+- Prisma 7.9.1 con `@prisma/adapter-pg` y `pg` validado en pool directo y detrás de PgBouncer 1.25.2
+  en `pool_mode=transaction`, sin fuga de contexto entre hogares;
+- pruebas enfocadas aprobadas: 26/26 directas y 9/9 con PgBouncer, incluidas revocaciones
+  concurrentes `Suspended`/`Left`/`Removed`, snapshots por statement, locking, rollback y timeout;
+  el schema Prisma y las migraciones de producción no cambiaron;
+- decisión `ADOPT WITH CONSTRAINTS` aceptada en
+  [ADR-021](adr/0021-postgresql-rls-para-aislamiento-multi-household.md), con el riesgo técnico de
+  revocación concurrente resuelto mediante `READ COMMITTED` explícito y `FOR SHARE` para escrituras;
+- el gate de RLS queda desbloqueado. Fase 3 sigue sin iniciar: permanecen pendientes los demás
+  ADR/gates financieros de esa fase.
 
 ### Objetivo
 

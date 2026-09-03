@@ -14,8 +14,14 @@ export default defineConfig({
   test: {
     environment: 'node',
     fileParallelism: false,
-    include: ['**/*.spec.ts'],
-    exclude: ['**/node_modules/**', '**/dist/**', 'apps/api/test/rls-*.integration.spec.ts'],
+    include: [
+      'apps/api/test/rls-direct.integration.spec.ts',
+      'apps/api/test/rls-membership-revocation-direct.integration.spec.ts',
+      'apps/api/test/rls-membership-revocation-pooler.integration.spec.ts',
+      'apps/api/test/rls-pooler.integration.spec.ts',
+    ],
     setupFiles: ['./tests/setup-environment.ts'],
+    testTimeout: 15_000,
+    hookTimeout: 30_000,
   },
 });

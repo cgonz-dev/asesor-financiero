@@ -2,7 +2,7 @@
 
 ## Snapshot
 
-- Fecha: 2026-09-02.
+- Fecha: 2026-09-03.
 - Fase 1: cerrada.
 - Fase 2: cerrada formalmente el 2 de septiembre de 2026.
 - Historias 1 a 6 de Fase 2: completadas.
@@ -13,13 +13,19 @@
   archivados.
 - El [plan de cierre formal](exec-plans/completed/phase-2-formal-closure.md) confirmó la evidencia
   de toda la fase; Fase 3 no se inicia con este cierre.
+- El spike obligatorio de PostgreSQL RLS previo a Fase 3 está completado: pool directo y
+  PgBouncer transaccional validaron aislamiento/fail-closed y el seguimiento de revocación
+  concurrente cerró el único riesgo técnico pendiente. [ADR-021](adr/0021-postgresql-rls-para-aislamiento-multi-household.md)
+  fue **Aceptado** con decisión `ADOPT WITH CONSTRAINTS`; el gate de RLS previo a Fase 3 queda
+  desbloqueado.
 - Historia 5 completó policies puras de visibilidad, pruebas negativas y el gap de auditoría de
   creación de Household; su [plan y evidencia](exec-plans/completed/phase-2-story-5.md) están
   archivados.
 - ADR aceptados: [ADR-001](adr/0001-idioma-y-vocabulario-canonico.md),
   [ADR-005](adr/0005-autenticacion-y-ciclo-de-sesion-movil.md),
-  [ADR-006](adr/0006-autorizacion-roles-visibilidad-y-aislamiento.md) y
-  [ADR-007](adr/0007-contratos-validacion-openapi-y-cliente.md).
+  [ADR-006](adr/0006-autorizacion-roles-visibilidad-y-aislamiento.md),
+  [ADR-007](adr/0007-contratos-validacion-openapi-y-cliente.md) y
+  [ADR-021](adr/0021-postgresql-rls-para-aislamiento-multi-household.md).
 
 Este archivo es el snapshot operacional vigente. El [roadmap](05-roadmap.md) conserva dirección y
 criterios; los [ADR](adr/README.md) conservan decisiones; los
@@ -95,6 +101,22 @@ Reverificación de cierre resuelta el 2 de septiembre de 2026:
 - la prueba afectada aprobó 9/9 y `pnpm verify:full` aprobó 195/195 en 37 archivos, incluidas las
   dos migraciones, lint, formato, typecheck, builds, OpenAPI, peers, Expo Doctor 21/21 y diff.
 
+Spike PostgreSQL RLS ejecutado el 2 de septiembre de 2026:
+
+- PostgreSQL 18.4, Prisma/adapter 7.9.1, `pg` 8.23.0 y PgBouncer 1.25.2 reales;
+- `pnpm test:rls:direct` aprobó 26/26 y `pnpm test:rls:pooler` aprobó 9/9;
+- se validaron roles sin bypass, `FORCE RLS`, fail-closed, aislamiento CRUD, User/membership no
+  activa, `WITH CHECK`, nested rollback, pools concurrentes, jobs acotados, constraints/canales
+  laterales y un `EXPLAIN` tenant-leading;
+- `READ COMMITTED` reevalúa una revocación en el siguiente statement; se reprodujo la carrera de
+  snapshot intra-statement documentada por PostgreSQL y `FOR SHARE` sobre la membership activa
+  ordenó escrituras frente a `Suspended`/`Left`/`Removed` en commit, rollback y timeout;
+- `REPEATABLE READ`, `SERIALIZABLE`, revalidación sin lock y constraints se descartaron como
+  sustitutos de esa serialización; las transacciones futuras deberán ser breves y distinguir
+  intención `read`/`write`;
+- el harness es efímero y no alteró schema Prisma, migraciones, endpoints ni datos funcionales;
+- resultado: `ADOPT WITH CONSTRAINTS`, aceptado formalmente el 3 de septiembre de 2026.
+
 La interfaz reutilizable de verificación se documenta en
 [`docs/exec-plans/README.md`](exec-plans/README.md).
 
@@ -109,10 +131,11 @@ al desplegarla y aplicarla al trigger, el flujo funcionó sin reiniciar API, bas
 Esta evidencia es manual e informada durante la validación real; las pruebas automáticas continúan
 cubriendo expiración, revocación, reutilización, concurrencia y límites Owner/Member.
 
-## Recomendación de cierre de Fase 2
+## Siguiente gate
 
-Todos los criterios de Fase 2 están satisfechos y la fase está cerrada formalmente. Antes de crear
-tablas financieras o iniciar Fase 3 debe planearse y ejecutarse el spike de RLS exigido por ADR-006.
+Fase 2 permanece cerrada y el gate de RLS, incluido su seguimiento de revocación concurrente, está
+desbloqueado por la aceptación de ADR-021. Antes de crear tablas financieras o iniciar Fase 3 deben
+resolverse los demás ADR y decisiones financieras bloqueantes del roadmap.
 
 ## Todavía no implementado
 
@@ -120,7 +143,7 @@ tablas financieras o iniciar Fase 3 debe planearse y ejecutarse el spike de RLS 
   regla pura no financiera hasta que una fase posterior introduzca un recurso real.
 - Cuentas financieras, saldos, `FinancialTransaction`, ledger, dinero y migraciones financieras.
 - Fases 3 en adelante, incluida IA, tools, presupuestos, tarjetas, conciliación y dashboard.
-- PostgreSQL RLS, administración avanzada de integrantes, transferencia de Owner, expulsión,
-  salida, `Admin` o co-owners.
-- Spike de RLS previo a las primeras tablas financieras de Fase 3; Fase 3 no está iniciada.
+- PostgreSQL RLS en tablas funcionales, administración avanzada de integrantes, transferencia de
+  Owner, expulsión, salida, `Admin` o co-owners.
+- Activación productiva de RLS y Fase 3; ninguna de ambas está iniciada.
 - Despliegue productivo, publicación en tiendas, integraciones bancarias y pagos reales.

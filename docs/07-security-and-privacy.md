@@ -40,7 +40,41 @@ Para cada lectura y escritura, el servidor debe:
 6. rechazar relaciones con recursos de otro hogar;
 7. registrar acciones sensibles de forma segura.
 
-Los IDs deben ser opacos y la API debe evitar respuestas que permitan enumerar hogares o recursos. [ADR-006](adr/0006-autorizacion-roles-visibilidad-y-aislamiento.md) acepta defensa en profundidad con restricciones y claves compuestas, y exige evaluar Row Level Security antes de Fase 3.
+Los IDs deben ser opacos y la API debe evitar respuestas que permitan enumerar hogares o recursos.
+[ADR-006](adr/0006-autorizacion-roles-visibilidad-y-aislamiento.md) acepta defensa en profundidad
+con restricciones y claves compuestas. El spike requerido terminó con recomendación
+`ADOPT WITH CONSTRAINTS` en
+[ADR-021](adr/0021-postgresql-rls-para-aislamiento-multi-household.md), **Aceptado**. El gate de RLS
+queda desbloqueado, sin autorizar por sí mismo Fase 3.
+
+### RLS como defensa en profundidad propuesta
+
+La adopción futura solo será segura bajo estas condiciones:
+
+- la aplicación conserva la autorización de negocio y valida identidad, membership, capability,
+  propiedad y visibilidad antes de consultar;
+- el runtime PostgreSQL no es owner, superuser ni `BYPASSRLS`; tablas tenant-scoped usan
+  `ENABLE` y `FORCE ROW LEVEL SECURITY`;
+- actor y hogar se establecen con `set_config(..., true)` dentro de una interactive transaction y
+  todo repositorio tenant-scoped usa exclusivamente su `TransactionClient`;
+- el wrapper fija `READ COMMITTED` y distingue `read`/`write`: las lecturas son read-only y toda
+  escritura revalida y bloquea la membership activa con `FOR SHARE` antes del primer acceso
+  tenant-scoped;
+- sin contexto, con contexto parcial o con User/membership no activa, PostgreSQL deniega por
+  defecto;
+- jobs usan roles y grants separados, reciben un hogar explícito y nunca obtienen bypass global;
+- migraciones y CI verifican catálogo además de comportamiento; soporte, backups y break-glass
+  permanecen fuera del runtime y requieren controles auditados;
+- FKs y unicidades locales se acotan por `household_id`, ya que constraints globales pueden filtrar
+  la existencia de datos invisibles incluso cuando RLS funciona.
+
+La carrera de snapshot durante una revocación concurrente quedó reproducida y acotada. Un statement
+ya iniciado conserva su snapshot y se ordena antes de la revocación; el siguiente statement después
+del commit falla cerrado. Para escrituras, `FOR SHARE` serializa la operación y el cambio de estado:
+si la operación bloquea primero, la revocación espera; si la revocación confirma primero, la
+operación se deniega. `FOR KEY SHARE`, revalidación sin lock, `REPEATABLE READ`, `SERIALIZABLE` y una
+constraint no ofrecen por sí solos esa garantía. Las transacciones deben ser cortas, con timeout y
+sin trabajo externo. ADR-021 está Aceptado y RLS nunca reemplaza la autorización de aplicación.
 
 ## Propiedad, roles y visibilidad
 
@@ -298,7 +332,9 @@ La evidencia de un incidente se preserva con acceso restringido y sin ampliar in
 
 ## Decisiones pendientes de ADR
 
-- ejecutar el spike de RLS exigido por [ADR-006](adr/0006-autorizacion-roles-visibilidad-y-aislamiento.md) antes de las primeras tablas financieras de Fase 3;
+- aplicar las restricciones obligatorias de
+  [ADR-021](adr/0021-postgresql-rls-para-aislamiento-multi-household.md) al diseñar las primeras
+  tablas financieras de Fase 3;
 - clasificación, retención, exportación y eliminación;
 - cifrado adicional a nivel de campo y gestión de claves;
 - auditoría, redacción, acceso de soporte y observabilidad;

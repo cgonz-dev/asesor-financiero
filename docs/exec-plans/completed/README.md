@@ -20,6 +20,12 @@ Planes completados bajo Harness 1.0:
   cierre de la fase sin iniciar Fase 3.
 - [Hotfix de logout móvil](phase-2-logout-update-loop-hotfix.md): protección de rutas centralizada,
   limpieza única del contexto de User y regresión contra ciclos de actualización.
+- [Spike PostgreSQL RLS previo a Fase 3](pre-phase-3-postgresql-rls-spike.md): aislamiento
+  multi-household con roles físicos, Prisma y PgBouncer; recomendación propuesta
+  `ADOPT WITH CONSTRAINTS` sin iniciar Fase 3.
+- [Revocación concurrente de memberships bajo RLS](pre-phase-3-rls-membership-revocation.md):
+  semántica `READ COMMITTED`, carrera intra-statement y serialización de escrituras con `FOR SHARE`;
+  ADR-021 queda listo para revisión, pero todavía Propuesto.
 
 La aceptación de invitaciones con una segunda identidad/dispositivo fue validada manualmente en
 Android real. La evidencia se registra en el estado del proyecto sin incluir datos sensibles.

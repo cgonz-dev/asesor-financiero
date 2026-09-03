@@ -1,0 +1,28 @@
+services:
+  postgres:
+    image: postgres:18.4
+    environment:
+      POSTGRES_DB: copiloto_rls_spike
+      POSTGRES_PASSWORD: ${RLS_SPIKE_ADMIN_PASSWORD}
+      POSTGRES_USER: rls_spike_admin
+    ports:
+      - '127.0.0.1:${RLS_SPIKE_POSTGRES_PORT}:5432'
+    healthcheck:
+      test: ['CMD-SHELL', 'pg_isready -U rls_spike_admin -d copiloto_rls_spike']
+      interval: 2s
+      timeout: 2s
+      retries: 30
+
+  pgbouncer:
+    build:
+      context: .
+      dockerfile: pgbouncer.Dockerfile
+      args:
+        PGBOUNCER_TAG: pgbouncer_1_25_2
+    environment:
+      RLS_SPIKE_APP_PASSWORD: ${RLS_SPIKE_APP_PASSWORD}
+    ports:
+      - '127.0.0.1:${RLS_SPIKE_PGBOUNCER_PORT}:6432'
+    depends_on:
+      postgres:
+        condition: service_healthy

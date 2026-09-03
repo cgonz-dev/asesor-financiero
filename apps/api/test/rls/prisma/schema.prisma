@@ -1,0 +1,37 @@
+generator client {
+  provider     = "prisma-client"
+  output       = "../../../src/generated/rls-probe"
+  moduleFormat = "cjs"
+}
+
+datasource db {
+  provider = "postgresql"
+  schemas  = ["rls_spike"]
+}
+
+model ProbeResource {
+  id          String      @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  householdId String      @map("household_id") @db.Uuid
+  clientKey   String      @map("client_key") @db.VarChar(64)
+  globalKey   String?     @unique(map: "uq_probe_resource_global_key") @map("global_key") @db.VarChar(64)
+  label       String      @db.VarChar(100)
+  items       ProbeItem[]
+
+  @@unique([id, householdId], map: "uq_probe_resource_id_household")
+  @@unique([householdId, clientKey], map: "uq_probe_resource_household_client_key")
+  @@index([householdId, id], map: "idx_probe_resource_household_id")
+  @@map("probe_resource")
+  @@schema("rls_spike")
+}
+
+model ProbeItem {
+  id          String        @id @default(dbgenerated("gen_random_uuid()")) @db.Uuid
+  resourceId  String        @map("resource_id") @db.Uuid
+  householdId String        @map("household_id") @db.Uuid
+  payload     String        @db.VarChar(100)
+  resource    ProbeResource @relation(fields: [resourceId, householdId], references: [id, householdId], onDelete: Restrict, onUpdate: Cascade)
+
+  @@index([householdId, resourceId], map: "idx_probe_item_household_resource")
+  @@map("probe_item")
+  @@schema("rls_spike")
+}
