@@ -10,7 +10,9 @@ invitaciones con segunda identidad y del ciclo Google-only están registradas, j
 completa verde. Administración avanzada de integrantes y recursos financieros permanecen fuera de
 Fase 2. [ADR-021](adr/0021-postgresql-rls-para-aislamiento-multi-household.md) fue aceptado como
 `ADOPT WITH CONSTRAINTS`: el gate de RLS previo a Fase 3 está desbloqueado. Fase 3 continúa sin
-iniciar hasta resolver los demás ADR requeridos.
+iniciar. ADR-002, ADR-003, ADR-004, ADR-008 y ADR-009 están aceptados;
+[ADR-019](adr/0019-observabilidad-auditoria-y-redaccion-de-datos-sensibles.md) está **Aceptado** el
+2026-09-04. El gate arquitectónico previo a Fase 3 está cerrado.
 
 ## Objetivos arquitectónicos
 
@@ -153,8 +155,8 @@ transacción para garantizar exactamente uno al inicio.
 La segunda migración de Fase 2 agrega `household_invitation` y `audit_event`. La invitación mantiene
 solo el hash del token, su Household, la membership Owner creadora, la restricción de correo y sus
 timestamps de ciclo. La auditoría actual es deliberadamente mínima y registra la creación de
-Household y los tres eventos de invitación implementados; no sustituye el diseño general pendiente
-de ADR-019.
+Household y los tres eventos de invitación implementados; no implementa todavía el baseline
+financiero aceptado en ADR-019.
 
 Prisma, sus repositorios y las transacciones viven en `apps/api`; `packages/domain` no importa
 NestJS ni Prisma. El desarrollo ordinario puede usar `prisma dev`, pero no constituye evidencia
@@ -220,6 +222,37 @@ Las suites finales aprobaron 26/26 casos directos y 9/9 detrás de PgBouncer, in
 rollback, timeout y reutilización del backend. ADR-021 está **Aceptado**. La decisión no activa
 todavía RLS productivo, tablas financieras ni el inicio de Fase 3.
 
+## Fundamentos financieros previos a Fase 3
+
+El gate documental de septiembre de 2026 produjo cuatro ADR relacionados. ADR-002, ADR-003,
+ADR-008 y ADR-009 fueron aceptados después de revisión humana:
+
+```text
+ADR-002 Money ───────┐
+                     ├─→ ADR-003 Ledger ──┐
+ADR-009 Date & Time ─┘                    ├─→ ADR-008 Idempotency
+                                          └─→ ADR-004 preview/confirmación (aceptado)
+
+ADR-006 autorización + ADR-021 RLS aceptados se aplican transversalmente.
+ADR-019 fija el baseline aceptado de auditoría/redacción.
+```
+
+- [ADR-002](adr/0002-representacion-monetaria-moneda-redondeo-y-division.md) acepta importes en minor
+  units `bigint`/`BIGINT`, moneda explícita, forma JSON string exacta y residuos rotativos por
+  operación.
+- [ADR-009](adr/0009-fechas-financieras-zona-horaria-y-periodos.md) acepta separar instantes UTC,
+  fechas civiles y zonas IANA, con ciclos configurables y anclaje mensual sin drift.
+- [ADR-003](adr/0003-ledger-signos-cuentas-tecnicas-e-invariantes.md) acepta entradas firmadas,
+  balance cero, inmutabilidad y una defensa diferible en PostgreSQL.
+- [ADR-008](adr/0008-idempotencia-concurrencia-y-alcance-de-claves.md) acepta claim tenant-aware y
+  fingerprint canónico confirmado en la misma transacción que el ledger.
+- [ADR-004](adr/0004-estados-preview-confirmacion-y-correcciones.md) acepta un snapshot persistido,
+  inmutable, versionado, actor-bound y de un solo uso; su confirmación consumiría preview,
+  idempotencia, posting y auditoría en un commit único.
+
+Las rutas siguientes describen intención futura y deberán ajustarse a las decisiones aceptadas. No
+existen aún modelos, contratos, endpoints ni migraciones que las implementen.
+
 ## Ruta de una escritura financiera
 
 1. El cliente o el orquestador de IA envía una intención con contrato validable, identidad y clave idempotente.
@@ -255,7 +288,9 @@ Una confirmación expirada o cuyo estado base cambió debe recalcularse o rechaz
 - Correcciones agregan historia; no mutan entradas confirmadas.
 - Los saldos derivados pueden optimizarse con agregados o snapshots reconciliables.
 
-El diseño definitivo de signos, restricciones en base de datos, cuentas técnicas, bloqueo y reconstrucción se decide mediante ADR antes de Fase 3.
+La decisión aceptada de signos, restricciones en base de datos, cuentas técnicas, atomicidad y
+reconstrucción está en ADR-003; los gates arquitectónicos previos están cerrados y su implementación
+requiere un execution plan autorizado.
 
 ## API y contratos
 
@@ -440,17 +475,31 @@ Los detalles están en [`07-security-and-privacy.md`](07-security-and-privacy.md
 
 ## Observabilidad y operación
 
-Se requieren:
+ADR-019 acepta cuatro señales separadas: un audit trail financiero durable, append-only,
+tenant-scoped y atómico con cada efecto confirmado; logs técnicos redactados; tracing temporal sin
+payload financiero; y métricas operacionales agregadas sin IDs o importes. Esta arquitectura
+describe el baseline aceptado, todavía pendiente de implementación.
+
+El baseline requiere:
 
 - correlation ID a través de móvil, API, tools y jobs;
 - métricas técnicas y de invariantes sin datos sensibles;
 - trazas y logs estructurados con redacción;
 - alertas para fallos de balance, duplicación, autorización y jobs;
-- auditoría separada de logs operativos;
+- auditoría separada de logs operativos y enlazada por referencias opacas;
 - health/readiness checks;
 - runbooks antes de beta.
 
-No se registrarán mensajes completos, tokens, números de cuenta, importes asociados a identidad u otros datos financieros sin justificación y protección explícitas.
+El audit trail no duplicará importes, saldos, cuentas, descripciones, categorías, payloads, prompts,
+claves idempotentes o fingerprints. Los retries recuperados no crearán otro hecho durable y los
+fallos/rollbacks se observarán sin afirmar que el posting ocurrió. No se registrarán mensajes
+completos, tokens, números de cuenta ni otros datos financieros innecesarios.
+
+Solo fallos/denegaciones de relevancia real para seguridad tendrán registro durable separado.
+Break-glass requerirá identidad de soporte, justificación, privilegio temporal y auditoría durable
+del acceso; Owner no tendrá bypass. El historial visible será una proyección UX autorizada, sin
+exponer directamente el registro técnico. La retención provisional del audit trail estará ligada
+al efecto financiero hasta ADR-018.
 
 La CI inicial se implementa con GitHub Actions: en cambios a `main`, pull requests hacia `main` y
 ejecuciones manuales valida la instalación reproducible, los controles del monorepo y que el
@@ -472,14 +521,14 @@ artefacto OpenAPI versionado permanezca actualizado. No despliega ni publica art
 | ID | Decisión | Resolver antes de | Estado |
 |---|---|---|---|
 | [ADR-001](adr/0001-idioma-y-vocabulario-canonico.md) | Idioma y vocabulario canónico de dominio/código/API | Fase 1 | Aceptado |
-| ADR-002 | Representación monetaria, moneda, redondeo y división | Fase 3 | Pendiente |
-| ADR-003 | Modelo de ledger, signos, cuentas técnicas e invariantes en DB | Fase 3 | Pendiente |
-| ADR-004 | Estados, vista previa, confirmación y correcciones | Fase 3 | Pendiente |
+| [ADR-002](adr/0002-representacion-monetaria-moneda-redondeo-y-division.md) | Representación monetaria, moneda, redondeo y división | Fase 3 | Aceptado |
+| [ADR-003](adr/0003-ledger-signos-cuentas-tecnicas-e-invariantes.md) | Modelo de ledger, signos, cuentas técnicas e invariantes en DB | Fase 3 | Aceptado |
+| [ADR-004](adr/0004-estados-preview-confirmacion-y-correcciones.md) | Estados, vista previa, confirmación y correcciones | Fase 3 | Aceptado |
 | [ADR-005](adr/0005-autenticacion-y-ciclo-de-sesion-movil.md) | Autenticación y ciclo seguro de sesiones móviles | Fase 2 | Aceptado |
 | [ADR-006](adr/0006-autorizacion-roles-visibilidad-y-aislamiento.md) | Autorización, roles, visibilidad y aislamiento/RLS | Fase 2 | Aceptado |
 | [ADR-007](adr/0007-contratos-validacion-openapi-y-cliente.md) | Contratos compartidos, validación, OpenAPI, cliente tipado y versionado de API | Fase 1 | Aceptado |
-| ADR-008 | Idempotencia, concurrencia y alcance de claves | Fase 3 | Pendiente |
-| ADR-009 | Fechas efectivas, zona horaria y periodos quincenales/mensuales | Fase 3 | Pendiente |
+| [ADR-008](adr/0008-idempotencia-concurrencia-y-alcance-de-claves.md) | Idempotencia, concurrencia y alcance de claves | Fase 3 | Aceptado |
+| [ADR-009](adr/0009-fechas-financieras-zona-horaria-y-periodos.md) | Fechas efectivas, zona horaria y periodos quincenales/mensuales | Fase 3 | Aceptado |
 | ADR-010 | Categorías, división y reclasificación histórica | Fase 4 | Pendiente |
 | ADR-011 | Persistencia de borradores y expiración de previews | Fase 4 | Pendiente |
 | ADR-012 | Manejo de prompts, modelo, retención, redacción y evaluaciones de IA | Fase 6 | Pendiente |
@@ -489,14 +538,14 @@ artefacto OpenAPI versionado permanezca actualizado. No despliega ni publica art
 | ADR-016 | Fórmulas de disponibilidad, presupuestos y proyecciones | Fase 10 | Pendiente |
 | ADR-017 | Estrategia offline, sincronización y conflictos | Después del MVP o antes si entra en alcance | Pendiente |
 | ADR-018 | Clasificación/retención, exportación y eliminación de datos | Antes de beta | Pendiente |
-| ADR-019 | Observabilidad, auditoría y redacción de datos sensibles | Fase 3; completar antes de beta | Pendiente |
+| [ADR-019](adr/0019-observabilidad-auditoria-y-redaccion-de-datos-sensibles.md) | Observabilidad, auditoría y redacción de datos sensibles | Fase 3; completar antes de beta | Aceptado |
 | ADR-020 | Backups, restauración, RPO/RTO y continuidad | Antes de beta | Pendiente |
 | [ADR-021](adr/0021-postgresql-rls-para-aislamiento-multi-household.md) | PostgreSQL RLS para aislamiento multi-household | Fase 3 | Aceptado — `ADOPT WITH CONSTRAINTS` |
 
-ADR-001, ADR-005, ADR-006, ADR-007 y ADR-021 están aceptados. Las Historias 1 a 6 de Fase 2, la validación
-Android con segunda identidad y la validación manual Google-only están completadas; la matriz
-`verify:full` está verde y Fase 2 está cerrada formalmente. Esto no amplía el alcance a
-administración avanzada de integrantes, RLS ni historias financieras. El spike de RLS requerido por
-ADR-006 fue aceptado mediante ADR-021. Fase 3 permanece sin iniciar hasta resolver los demás ADR
-requeridos; los demás IDs son reservas de trabajo hasta que exista contexto, alternativas y una
-decisión revisable.
+ADR-001, ADR-002, ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, ADR-008, ADR-009, ADR-019 y ADR-021 están aceptados. Las Historias 1 a 6
+de Fase 2, la validación Android con segunda identidad y la validación manual Google-only están
+completadas; la matriz `verify:full` está verde y Fase 2 está cerrada formalmente. Esto no amplía el
+alcance a administración avanzada de integrantes, RLS ni historias financieras. El spike de RLS
+requerido por ADR-006 fue aceptado mediante ADR-021. ADR-019 fue aceptado el 2026-09-04 y cierra el
+último gate arquitectónico previo a Fase 3. La fase permanece sin iniciar y requiere un execution
+plan funcional autorizado; los demás IDs conservan sus fases límite.

@@ -75,6 +75,11 @@ La IA no debe:
 
 Una respuesta afirmativa vaga solo cuenta como confirmación si la interfaz y el contrato la vinculan inequívocamente con una vista previa vigente. Si la vista previa expiró o cambió el estado base, debe recalcularse o rechazarse.
 
+[ADR-004](adr/0004-estados-preview-confirmacion-y-correcciones.md) concreta esta frontera mediante un
+preview persistido, inmutable, versionado y vinculado al actor/hogar. La IA podrá crear y presentar
+el preview, pero no confirmarlo autónomamente. La decisión aceptada todavía no habilita herramientas
+financieras.
+
 ## Manejo de ambigüedad
 
 La IA distingue entre información **requerida**, **inferible con evidencia** y **desconocida**.
@@ -191,6 +196,13 @@ Se conserva correlación entre conversación, llamada de herramienta, borrador, 
 
 Los logs operativos no sustituyen la auditoría y deben redactar contenido sensible. No se requiere almacenar razonamiento interno del modelo.
 
+[ADR-019](adr/0019-observabilidad-auditoria-y-redaccion-de-datos-sensibles.md), **Aceptado** el
+2026-09-04, mantiene al usuario que confirma como actor causal y registra `ai`
+solo como canal. La IA no puede confirmar el preview. Un job autónomo usará un principal de
+servicio y conservará su cadena causal. Audit trail, logs, traces y métricas no conservarán
+prompts, conversaciones, argumentos de tools, importes, descripciones ni razonamiento del modelo;
+la investigación se enlazará mediante `correlationId` y referencias opacas autorizadas.
+
 ## Evaluación antes de habilitar una herramienta
 
 El conjunto de evaluación versionado debe cubrir:
@@ -218,6 +230,5 @@ Además de la calidad del modelo, las pruebas deben demostrar que los controles 
 - retención, redacción y residencia de conversaciones;
 - consentimiento y uso de datos por proveedores;
 - persistencia de borradores y memoria estructurada;
-- confirmación vinculante y expiración de previews;
 - evaluaciones, umbrales de liberación y monitoreo de regresiones;
 - tratamiento seguro de archivos o contenido recuperado.

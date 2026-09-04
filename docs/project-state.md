@@ -2,7 +2,7 @@
 
 ## Snapshot
 
-- Fecha: 2026-09-03.
+- Fecha: 2026-09-04.
 - Fase 1: cerrada.
 - Fase 2: cerrada formalmente el 2 de septiembre de 2026.
 - Historias 1 a 6 de Fase 2: completadas.
@@ -18,13 +18,31 @@
   concurrente cerró el único riesgo técnico pendiente. [ADR-021](adr/0021-postgresql-rls-para-aislamiento-multi-household.md)
   fue **Aceptado** con decisión `ADOPT WITH CONSTRAINTS`; el gate de RLS previo a Fase 3 queda
   desbloqueado.
+- El gate de fundamentos financieros produjo ADR-002/003/008/009. Después de revisión y ajustes,
+  los cuatro fueron **Aceptados** el 4 de septiembre de 2026. Esto fija los fundamentos, pero no
+  inicia Fase 3.
+- El gate de preview y confirmación produjo
+  [ADR-004](adr/0004-estados-preview-confirmacion-y-correcciones.md), **Aceptado** el 4 de septiembre
+  de 2026 después de validarse con PostgreSQL real. Esto fija el ciclo de confirmación, pero no
+  inicia Fase 3.
+- El gate de auditoría y observabilidad produjo
+  [ADR-019](adr/0019-observabilidad-auditoria-y-redaccion-de-datos-sensibles.md), **Aceptado** el 4
+  de septiembre de 2026. Se validó una separación entre audit trail durable y telemetría redactada
+  con 10/10 probes directos y 10/10 mediante PgBouncer. La aceptación humana cierra el gate
+  arquitectónico previo a Fase 3; Fase 3 permanece sin iniciar.
 - Historia 5 completó policies puras de visibilidad, pruebas negativas y el gap de auditoría de
   creación de Household; su [plan y evidencia](exec-plans/completed/phase-2-story-5.md) están
   archivados.
 - ADR aceptados: [ADR-001](adr/0001-idioma-y-vocabulario-canonico.md),
+  [ADR-002](adr/0002-representacion-monetaria-moneda-redondeo-y-division.md),
+  [ADR-003](adr/0003-ledger-signos-cuentas-tecnicas-e-invariantes.md),
+  [ADR-004](adr/0004-estados-preview-confirmacion-y-correcciones.md),
   [ADR-005](adr/0005-autenticacion-y-ciclo-de-sesion-movil.md),
   [ADR-006](adr/0006-autorizacion-roles-visibilidad-y-aislamiento.md),
-  [ADR-007](adr/0007-contratos-validacion-openapi-y-cliente.md) y
+  [ADR-007](adr/0007-contratos-validacion-openapi-y-cliente.md),
+  [ADR-008](adr/0008-idempotencia-concurrencia-y-alcance-de-claves.md),
+  [ADR-009](adr/0009-fechas-financieras-zona-horaria-y-periodos.md),
+  [ADR-019](adr/0019-observabilidad-auditoria-y-redaccion-de-datos-sensibles.md) y
   [ADR-021](adr/0021-postgresql-rls-para-aislamiento-multi-household.md).
 
 Este archivo es el snapshot operacional vigente. El [roadmap](05-roadmap.md) conserva dirección y
@@ -117,6 +135,58 @@ Spike PostgreSQL RLS ejecutado el 2 de septiembre de 2026:
 - el harness es efímero y no alteró schema Prisma, migraciones, endpoints ni datos funcionales;
 - resultado: `ADOPT WITH CONSTRAINTS`, aceptado formalmente el 3 de septiembre de 2026.
 
+Gate de fundamentos financieros investigado el 3 de septiembre de 2026:
+
+- Money propone minor units en `bigint`/`BIGINT`, moneda explícita, contrato JSON string, límite
+  controlado, half-even para cálculos derivados y reparto determinista de residuos;
+- Date & Time propone separar instantes UTC, fechas civiles y zona IANA, con periodos civiles
+  semiabiertos y resolución explícita de gaps/folds;
+- Ledger propone entradas firmadas, mínimo dos cuentas, balance cero, trigger diferible como
+  defensa de base, inmutabilidad y reversals, todo dentro del patrón de ADR-021;
+- Idempotency propone header opaco, scope por hogar/actor/operación, fingerprint canónico y claim
+  atómico junto con ledger/auditoría;
+- probes efímeros en PostgreSQL 18.4 y Prisma/adapter 7.9.1 validaron exactitud/round-trip,
+  calendarios/DST, balance/rollback/FK compuesta e idempotencia concurrente;
+- `pnpm install --frozen-lockfile` y `pnpm verify:full` aprobaron; la matriz conservó 195/195
+  pruebas generales y Expo Doctor 21/21, además de lint, formato, typecheck, builds, OpenAPI,
+  peers, migraciones y diff en verde;
+- no se creó código financiero, contrato, endpoint, tabla ni migración productiva;
+- tras la revisión humana del 4 de septiembre, ADR-002 quedó aceptado con reparto rotativo de
+  residuos por operación, ADR-009 con ciclos configurables/anclaje mensual sin drift, ADR-003 con
+  ledger firmado e invariantes diferidas y ADR-008 con idempotencia atómica tenant-aware.
+
+Gate de preview y confirmación investigado el 4 de septiembre de 2026:
+
+- ADR-004 acepta un snapshot persistido por el servidor, inmutable, versionado, vinculado al actor
+  y hogar, con TTL fijo inicial de 15 minutos y consumo único;
+- la confirmación propuesta reautoriza y bloquea dentro de una sola transacción RLS, reclama
+  idempotencia y confirma posting, auditoría y consumo de preview atómicamente;
+- probes efímeros sobre PostgreSQL 18.4 validaron versiones/superseding, expiración, dependencias,
+  concurrencia, replay, pérdida de respuesta, rollback, RLS, revocación de membership y
+  correcciones: 10/10 con pool directo y 10/10 con PgBouncer 1.25.2 en modo transaccional;
+- no se creó código financiero, contrato, endpoint, tabla o migración productiva;
+- ADR-004 fue **Aceptado** el 4 de septiembre de 2026 con snapshot persistido, TTL de 15 minutos,
+  vínculo al mismo actor, consumo único, allowlist inicial vacía y confirmación obligatoria para
+  todo efecto financiero.
+
+Gate de auditoría y observabilidad investigado el 4 de septiembre de 2026:
+
+- ADR-019 acepta un audit trail financiero durable, append-only, tenant-scoped y atómico con el
+  posting, separado de logs, traces y métricas operacionales redactados;
+- la cadena `operationId → previewId → idempotencyRecordId → transactionId → auditEventId` se
+  reconstruye con referencias opacas, sin duplicar importes, saldos, descripciones, payloads,
+  secretos, claves idempotentes ni prompts;
+- fallos, denegaciones, conflictos, retries y rollbacks se observan mediante telemetría; solo los
+  relevantes para seguridad requieren además un registro durable separado;
+- un harness efímero sobre PostgreSQL 18.4 y PgBouncer 1.25.2 validó atomicidad, rollback,
+  append-only, RLS/fail-closed, jobs acotados, retries, correcciones, correlación y redacción: 10/10
+  casos con pool directo y 10/10 mediante PgBouncer;
+- no se modificaron código, contratos, schema Prisma o migraciones productivas;
+- ADR-019 fue **Aceptado** el 2026-09-04: retención provisional ligada al efecto hasta ADR-018;
+  break-glass con identidad de soporte, justificación, privilegio temporal y auditoría durable del
+  acceso; Owner sin bypass; actor causal separado del canal IA/job; historial visible futuro como
+  proyección UX autorizada del audit trail.
+
 Estabilización de CI ejecutada el 3 de septiembre de 2026:
 
 - el `ECONNRESET` intermitente no provenía de Auth0 ni de la API: Supertest abría automáticamente un
@@ -141,11 +211,16 @@ al desplegarla y aplicarla al trigger, el flujo funcionó sin reiniciar API, bas
 Esta evidencia es manual e informada durante la validación real; las pruebas automáticas continúan
 cubriendo expiración, revocación, reutilización, concurrencia y límites Owner/Member.
 
-## Siguiente gate
+## Gate arquitectónico previo a Fase 3 — cerrado el 2026-09-04
 
-Fase 2 permanece cerrada y el gate de RLS, incluido su seguimiento de revocación concurrente, está
-desbloqueado por la aceptación de ADR-021. Antes de crear tablas financieras o iniciar Fase 3 deben
-resolverse los demás ADR y decisiones financieras bloqueantes del roadmap.
+Fase 2 permanece cerrada. Money (ADR-002), Ledger (ADR-003), Preview (ADR-004), Idempotency
+(ADR-008), Date & Time (ADR-009), auditoría/observabilidad (ADR-019) y RLS (ADR-021) están
+aceptados, junto con autorización/contratos (ADR-006/007). El registro ADR y el roadmap no contienen
+otro gate arquitectónico pendiente previo a Fase 3.
+
+Los ADR-010/011 y siguientes pendientes conservan sus fases límite; ADR-018/020 y el hardening
+operacional corresponden a beta. El siguiente paso será preparar y autorizar un execution plan
+funcional de Fase 3. Este registro no lo ejecuta ni inicia la fase.
 
 ## Todavía no implementado
 

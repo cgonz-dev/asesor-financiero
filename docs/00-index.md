@@ -50,8 +50,8 @@ Toda persona o agente que contribuya debe leer primero:
 | Área | Estado inicial | Próxima acción |
 |---|---|---|
 | Visión y alcance | Propuesta fundacional documentada | Validar con usuarios de la pareja piloto |
-| Dominio financiero | Modelo conceptual documentado; no implementado | Resolver ADR de dinero y ledger antes de Fase 3 |
-| Arquitectura | Fases 1 y 2 cerradas; Historias 1 a 6 y validaciones Android satisfechas, con matriz completa verde; navegación con protección raíz, visibilidad pura y auditoría básica implementadas; ADR-001, ADR-005, ADR-006, ADR-007 y ADR-021 aceptados | Resolver los ADR financieros pendientes antes de iniciar Fase 3 |
+| Dominio financiero | Modelo conceptual documentado; ADR-002/003/004/008/009/019 aceptados; gate arquitectónico previo a Fase 3 cerrado; no implementado | Preparar y autorizar un execution plan funcional de Fase 3 |
+| Arquitectura | Fases 1 y 2 cerradas; navegación, visibilidad pura y auditoría básica implementadas; ADR-001/002/003/004/005/006/007/008/009/019/021 aceptados; gate previo cerrado el 2026-09-04 | Fase 3 no iniciada; requiere un execution plan funcional autorizado |
 | IA | Límites, política y catálogo futuro documentados | Resolver ADR-012 y contratos durante Fase 6 |
 | Seguridad y privacidad | Baseline documentado; Auth0 y límites Household/invitaciones de ADR-006 implementados; invitaciones y Google-only validados en Android real; conexión Google fijada en el cliente móvil; ADR-021 aceptado como RLS en defensa en profundidad | Aplicar ADR-021 solo mediante una historia aprobada y ampliar autorización de forma explícita |
 | Roadmap | Vigente | Ejecutar de forma secuencial |

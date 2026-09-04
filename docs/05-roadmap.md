@@ -337,6 +337,36 @@ integrantes y RLS no se han iniciado.
 - el gate de RLS queda desbloqueado. Fase 3 sigue sin iniciar: permanecen pendientes los demás
   ADR/gates financieros de esa fase.
 
+### Gate previo a Fase 3 — fundamentos financieros revisados el 4 de septiembre de 2026
+
+- [ADR-002](adr/0002-representacion-monetaria-moneda-redondeo-y-division.md) fue aceptado con minor
+  units, MXN para el MVP, límites, redondeo half-even y residuos rotativos por operación;
+- [ADR-009](adr/0009-fechas-financieras-zona-horaria-y-periodos.md) fue aceptado con un modelo
+  híbrido de instantes UTC, fechas civiles y zonas IANA, ciclos configurables y anclaje mensual sin
+  drift;
+- [ADR-003](adr/0003-ledger-signos-cuentas-tecnicas-e-invariantes.md) fue aceptado con entradas firmadas,
+  balance cero defendido por dominio y trigger diferible, inmutabilidad y reversals;
+- [ADR-008](adr/0008-idempotencia-concurrencia-y-alcance-de-claves.md) fue aceptado con clave por header,
+  scope tenant/actor/operación, fingerprint canónico y commit atómico con ledger;
+- las cuatro decisiones se investigaron con probes desechables, sin cambiar schema, contratos ni
+  migraciones; `pnpm verify:full` aprobó la matriz de 195/195. Los cuatro ADR están **Aceptados**,
+  pero esto no inicia Fase 3.
+
+### Gate previo a Fase 3 — auditoría y observabilidad aceptado el 4 de septiembre de 2026
+
+- [ADR-019](adr/0019-observabilidad-auditoria-y-redaccion-de-datos-sensibles.md) acepta separar un
+  audit trail financiero durable y atómico de logs, traces y métricas operacionales redactados;
+- la decisión enlaza preview, idempotencia, ledger y correcciones mediante referencias opacas, sin
+  duplicar importes, saldos, descripciones, payloads, claves idempotentes o prompts;
+- probes efímeros validaron 10/10 casos con PostgreSQL 18.4 directo y 10/10 mediante PgBouncer
+  1.25.2, incluidos commit/rollback, append-only, RLS, jobs acotados, retries y redacción;
+- ADR-019 está **Aceptado**: solo fallos/denegaciones relevantes para seguridad tendrán registro
+  durable separado; retención provisional ligada al efecto hasta ADR-018; soporte break-glass con
+  identidad, justificación, privilegio temporal y auditoría durable del acceso; Owner sin bypass;
+  identidad causal separada del canal IA/jobs; historial de usuario como proyección UX autorizada.
+- Todos los gates arquitectónicos previos a Fase 3 están cerrados el 2026-09-04. No se implementó
+  infraestructura financiera ni se inició Fase 3.
+
 ### Objetivo
 
 Establecer identidad, aislamiento por hogar y permisos antes de almacenar finanzas.
@@ -409,6 +439,10 @@ Cuentas con saldo, transacciones, categorías, IA, permisos avanzados y administ
 
 ## Fase 3. Cuentas y ledger financiero
 
+Estado: no iniciada. Gate arquitectónico previo cerrado el 2026-09-04; la implementación requiere
+un execution plan funcional autorizado. ADR pendientes de fases posteriores/beta conservan sus
+plazos y no reabren este gate.
+
 ### Objetivo
 
 Construir la fuente de verdad financiera exacta, balanceada, reconstruible, auditable e idempotente.
@@ -434,8 +468,16 @@ Construir la fuente de verdad financiera exacta, balanceada, reconstruible, audi
 ### Dependencias
 
 - Fase 2.
-- ADR-002, ADR-003, ADR-004, ADR-008 y ADR-009.
-- Baseline de auditoría/redacción de ADR-019.
+- [ADR-002](adr/0002-representacion-monetaria-moneda-redondeo-y-division.md),
+  [ADR-003](adr/0003-ledger-signos-cuentas-tecnicas-e-invariantes.md),
+  [ADR-004](adr/0004-estados-preview-confirmacion-y-correcciones.md),
+  [ADR-008](adr/0008-idempotencia-concurrencia-y-alcance-de-claves.md) y
+  [ADR-009](adr/0009-fechas-financieras-zona-horaria-y-periodos.md), todos aceptados antes de
+  implementar; ADR-002/003/004/008/009 ya están aceptados.
+- [ADR-019](adr/0019-observabilidad-auditoria-y-redaccion-de-datos-sensibles.md) aceptado como
+  baseline de auditoría/redacción.
+- [ADR-021](adr/0021-postgresql-rls-para-aislamiento-multi-household.md) aceptado: restricciones RLS
+  obligatorias para las futuras tablas tenant-scoped.
 
 ### Criterios de aceptación
 
@@ -1004,7 +1046,7 @@ Endurecer el sistema completo, demostrar recuperación y operarlo con un grupo p
 ### Dependencias
 
 - Fases anteriores funcionalmente cerradas.
-- ADR-018, ADR-019 y ADR-020.
+- ADR-018, [ADR-019](adr/0019-observabilidad-auditoria-y-redaccion-de-datos-sensibles.md) y ADR-020.
 - Revisión legal/privacidad para el mercado piloto.
 
 ### Criterios de aceptación

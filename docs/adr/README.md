@@ -38,10 +38,12 @@ Un ADR aceptado no se reescribe para ocultar el pasado. Una decisión nueva lo s
 - Referencias: enlazar fase, historias, documentos, contratos y ADR relacionados.
 - Idioma: español; términos de código se documentan según [ADR-001](0001-idioma-y-vocabulario-canonico.md).
 
-Los ADR materializados usan el ID de cuatro dígitos en su nombre de archivo. ADR-001, ADR-005,
-ADR-006, ADR-007 y ADR-021 están aceptados. ADR-021 adopta RLS como defensa en profundidad con
-restricciones obligatorias; no inicia Fase 3 ni sustituye los ADR financieros todavía pendientes.
-Los IDs sin archivo permanecen reservados hasta que exista contexto, alternativas y una decisión
+Los ADR materializados usan el ID de cuatro dígitos en su nombre de archivo. ADR-001, ADR-002,
+ADR-003, ADR-004, ADR-005, ADR-006, ADR-007, ADR-008, ADR-009, ADR-019 y ADR-021 están aceptados. ADR-021
+adopta RLS como defensa en profundidad con restricciones obligatorias. La aceptación de los
+fundamentos financieros y del ciclo de preview fija decisiones arquitectónicas, pero no inicia
+Fase 3. La aceptación de ADR-019 el 2026-09-04 cierra el último gate arquitectónico previo a esa fase. Los
+IDs sin archivo permanecen reservados hasta que exista contexto, alternativas y una decisión
 revisable.
 
 ## Proceso
@@ -63,14 +65,14 @@ Una decisión que afecte saldos, auditoría, seguridad o privacidad requiere con
 | ADR | Decisión | Fase límite | Estado |
 |---:|---|---|---|
 | [001](0001-idioma-y-vocabulario-canonico.md) | Idioma y vocabulario canónico de dominio, código y API | Antes de Fase 1 | Aceptado |
-| 002 | Representación monetaria, moneda, redondeo y división | Antes de Fase 3 | Pendiente |
-| 003 | Ledger, signos, cuentas técnicas e invariantes en base de datos | Antes de Fase 3 | Pendiente |
-| 004 | Estados, vista previa, confirmación y correcciones | Antes de Fase 3 | Pendiente |
+| [002](0002-representacion-monetaria-moneda-redondeo-y-division.md) | Representación monetaria, moneda, redondeo y división | Antes de Fase 3 | Aceptado |
+| [003](0003-ledger-signos-cuentas-tecnicas-e-invariantes.md) | Ledger, signos, cuentas técnicas e invariantes en base de datos | Antes de Fase 3 | Aceptado |
+| [004](0004-estados-preview-confirmacion-y-correcciones.md) | Estados, vista previa, confirmación y correcciones | Antes de Fase 3 | Aceptado |
 | [005](0005-autenticacion-y-ciclo-de-sesion-movil.md) | Autenticación y ciclo seguro de sesiones móviles | Antes de Fase 2 | Aceptado |
 | [006](0006-autorizacion-roles-visibilidad-y-aislamiento.md) | Autorización, roles, visibilidad y aislamiento/RLS | Antes de Fase 2 | Aceptado |
 | [007](0007-contratos-validacion-openapi-y-cliente.md) | Contratos compartidos, validación, OpenAPI, cliente tipado y versionado de API | Antes de Fase 1 | Aceptado |
-| 008 | Idempotencia, concurrencia y alcance de claves | Antes de Fase 3 | Pendiente |
-| 009 | Fechas efectivas, zona horaria y periodos | Antes de Fase 3 | Pendiente |
+| [008](0008-idempotencia-concurrencia-y-alcance-de-claves.md) | Idempotencia, concurrencia y alcance de claves | Antes de Fase 3 | Aceptado |
+| [009](0009-fechas-financieras-zona-horaria-y-periodos.md) | Fechas efectivas, zona horaria y periodos | Antes de Fase 3 | Aceptado |
 | 010 | Categorías, divisiones y reclasificación histórica | Antes de Fase 4 | Pendiente |
 | 011 | Persistencia de borradores y expiración de previews | Antes de Fase 4 | Pendiente |
 | 012 | Prompts, modelo, retención, redacción y evaluaciones de IA | Antes de Fase 6 | Pendiente |
@@ -80,7 +82,7 @@ Una decisión que afecte saldos, auditoría, seguridad o privacidad requiere con
 | 016 | Disponibilidad, presupuestos y proyecciones | Antes de Fase 10 | Pendiente |
 | 017 | Offline, sincronización y conflictos | Después del MVP o antes si cambia el alcance | Pendiente |
 | 018 | Clasificación, retención, exportación y eliminación de datos | Antes de beta | Pendiente |
-| 019 | Observabilidad, auditoría y redacción | Baseline antes de Fase 3; completar antes de beta | Pendiente |
+| [019](0019-observabilidad-auditoria-y-redaccion-de-datos-sensibles.md) | Observabilidad, auditoría y redacción | Baseline antes de Fase 3; completar antes de beta | Aceptado |
 | 020 | Backups, restauración, RPO/RTO y continuidad | Antes de beta | Pendiente |
 | [021](0021-postgresql-rls-para-aislamiento-multi-household.md) | PostgreSQL RLS para aislamiento multi-household | Antes de Fase 3 | Aceptado — `ADOPT WITH CONSTRAINTS` |
 

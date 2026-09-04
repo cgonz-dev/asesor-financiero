@@ -116,7 +116,9 @@ Cada escenario se materializa gradualmente en las fases de [`05-roadmap.md`](05-
 - asesoría financiera, fiscal, contable o legal garantizada;
 - recomendaciones automáticas de inversión;
 - contabilidad empresarial, facturación o nómina patronal;
-- soporte completo de múltiples divisas, salvo que un ADR cambie el alcance;
+- escritura financiera en moneda distinta de MXN y soporte multimoneda; la representación sigue
+  siendo currency-aware conforme a
+  [ADR-002](adr/0002-representacion-monetaria-moneda-redondeo-y-division.md);
 - OCR de estados de cuenta como flujo principal;
 - automatizaciones irreversibles sin confirmación;
 - marketplace o integraciones de terceros;
@@ -155,7 +157,8 @@ Los objetivos numéricos de rendimiento, disponibilidad, RPO y RTO requieren ADR
 
 ## Supuestos
 
-- el primer mercado opera principalmente en MXN;
+- el MVP opera únicamente en MXN; habilitar otra moneda exige un cambio explícito de alcance y
+  pruebas;
 - la primera interfaz se diseña en español;
 - el usuario confirma movimientos antes de que afecten saldos;
 - la captura inicial es manual o conversacional;
@@ -175,4 +178,3 @@ Una propuesta entra al MVP solo si:
 6. no desplaza un riesgo crítico sin decisión explícita.
 
 Si falla alguno, se registra como trabajo futuro o se aprueba mediante cambio documentado de alcance.
-

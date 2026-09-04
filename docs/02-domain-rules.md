@@ -71,9 +71,15 @@ El [ADR-001](adr/0001-idioma-y-vocabulario-canonico.md) aceptado establece docum
 3. La suma algebraica de las entradas de una transacción por moneda debe ser cero.
 4. Un saldo histórico se reconstruye desde el ledger hasta un instante o secuencia determinada.
 5. Los agregados o snapshots son optimizaciones verificables, nunca una fuente independiente que pueda contradecir el ledger.
-6. El dinero se almacena como entero en unidad mínima o decimal controlado; nunca como `float`.
+6. El dinero se almacena como entero en unidad mínima (`bigint`/`BIGINT`); nunca como `float`.
 7. Importe, moneda y precisión se validan en el backend.
 8. No se mezclan monedas dentro de una transacción sin una operación de conversión explícita y una política aprobada por ADR.
+
+[ADR-002](adr/0002-representacion-monetaria-moneda-redondeo-y-division.md) acepta minor units en
+`bigint`/`BIGINT`, moneda explícita, contrato JSON string, redondeo half-even solo en cálculos
+derivados y reparto determinista rotativo por operación. La decisión es vigente, pero su
+implementación requiere un execution plan autorizado de Fase 3; el gate arquitectónico previo
+quedó cerrado el 2026-09-04.
 
 ### Atomicidad, idempotencia y concurrencia
 
@@ -82,6 +88,12 @@ El [ADR-001](adr/0001-idioma-y-vocabulario-canonico.md) aceptado establece docum
 3. Repetir la misma petición devuelve el resultado previo y no duplica entradas.
 4. Reutilizar una clave con contenido incompatible produce conflicto, no una segunda operación.
 5. Las validaciones sensibles al saldo consideran concurrencia; la estrategia de bloqueo/versionado requiere ADR.
+
+[ADR-003](adr/0003-ledger-signos-cuentas-tecnicas-e-invariantes.md) acepta entradas firmadas,
+balance cero protegido por dominio y trigger diferible, inmutabilidad y reversals.
+[ADR-008](adr/0008-idempotencia-concurrencia-y-alcance-de-claves.md) acepta scope por hogar, actor y
+operación con fingerprint canónico y atomicidad junto al ledger. Ambas decisiones están vigentes,
+pero su implementación espera un execution plan autorizado; el gate arquitectónico previo está cerrado.
 
 ### Historial y correcciones
 
@@ -385,7 +397,11 @@ Modelo conceptual inicial:
 6. `reversed`: el original sigue inmutable y existe una reversión confirmada asociada.
 7. `replaced`: existe reemplazo confirmado enlazado.
 
-La expiración de vistas previas, transiciones y relación entre estado del original y transacciones correctivas requieren ADR. No debe existir un estado que permita editar entradas ya confirmadas.
+[ADR-004](adr/0004-estados-preview-confirmacion-y-correcciones.md) define el preview como un snapshot
+persistido por el servidor, inmutable, versionado y de un solo uso. La confirmación explícita de su
+versión exacta es el único camino hacia el posting; un cambio semántico produce una versión nueva y
+una corrección confirmada produce otra intención enlazada. La decisión todavía no está implementada.
+No debe existir un estado que permita editar entradas ya confirmadas.
 
 ## Conciliación
 
@@ -441,16 +457,21 @@ Debe ser una plantilla configurable, no una verdad universal:
 
 El denominador —ingreso neto recibido, ingreso sostenible u otro— se configura y explica. Los residuos por redondeo se asignan determinísticamente. Bonos temporales pueden excluirse de la base sostenible y distribuirse mediante una regla distinta.
 
-## Decisiones pendientes de ADR del dominio
+## Estado de decisiones de dominio
 
-- representación monetaria, monedas, redondeo y división;
-- convención de signos/débitos/créditos y cuentas técnicas;
-- estados, vistas previas, expiración y correcciones;
-- semántica de fechas efectivas, zonas horarias y periodos;
+- representación monetaria, monedas, redondeo y división: aceptadas en
+  [ADR-002](adr/0002-representacion-monetaria-moneda-redondeo-y-division.md);
+- signos, cuentas técnicas e invariantes aceptados en
+  [ADR-003](adr/0003-ledger-signos-cuentas-tecnicas-e-invariantes.md);
+- estados, vistas previas, expiración y correcciones: aceptados en
+  [ADR-004](adr/0004-estados-preview-confirmacion-y-correcciones.md);
+- fechas efectivas, zonas horarias y periodos: aceptados en
+  [ADR-009](adr/0009-fechas-financieras-zona-horaria-y-periodos.md);
 - modelado de tandas;
 - adquisición y disponibilidad de fondos de ahorro/prestaciones;
 - fórmulas de disponible, comprometido, proyectado y patrimonio;
 - políticas de presupuestos, reembolsos y traspasos entre periodos;
 - taxonomía y gobierno de categorías;
-- concurrencia e idempotencia;
+- concurrencia e idempotencia aceptadas en
+  [ADR-008](adr/0008-idempotencia-concurrencia-y-alcance-de-claves.md);
 - tratamiento futuro de divisas y tipos de cambio.

@@ -174,7 +174,8 @@ historia. La auditoría actual registra resultados exitosos de creación de Hous
 revocación y aceptación de invitaciones. Cada evento contiene actor, Household, acción, resultado,
 recurso e instante, sin token, hash o correo. La escritura es atómica con la acción: si falla el
 evento, se revierte la operación. Correlación e intentos fallidos forman parte del trabajo general
-de ADR-019.
+de [ADR-019](adr/0019-observabilidad-auditoria-y-redaccion-de-datos-sensibles.md), actualmente
+**Aceptado** el 2026-09-04, pendiente de implementación.
 
 ## Protección de datos y secretos
 
@@ -226,6 +227,23 @@ Se prefieren códigos de evento, IDs opacos, correlación, duración, resultado 
 
 La auditoría financiera conserva actor, acción, instante, canal, intención, resultado y relación entre original/corrección. No debe incluir razonamiento interno del modelo.
 
+ADR-019 exige que esa auditoría sea tenant-scoped, append-only y atómica con el efecto financiero
+confirmado, protegida mediante `FORCE RLS` y un runtime sin bypass conforme a ADR-021. Se enlazaría
+con preview, idempotencia, ledger y correcciones mediante referencias opacas, sin duplicar importes,
+saldos, cuentas, descripciones, categorías, cuerpos, claves idempotentes, fingerprints o digests.
+
+La decisión separa logs, tracing y métricas del audit trail durable. Fallos, denegaciones,
+conflictos, retries y rollbacks producirán señales redactadas que no afirmen un efecto financiero;
+solo los relevantes para seguridad se conservarán durablemente en un registro separado. Los
+errores operativos ordinarios quedan en telemetría temporal. Métricas usarán únicamente dimensiones enumeradas de baja cardinalidad, nunca actor,
+Household, operación, transacción, preview o importe.
+
+La retención provisional del audit trail queda ligada a la vida del efecto financiero hasta
+ADR-018. Break-glass futuro exige identidad de soporte, justificación obligatoria, privilegio
+temporal y auditoría durable del propio acceso. Ningún Owner obtiene bypass por su rol. El
+historial visible para el usuario será una proyección UX autorizada por recurso y hogar, sin
+exposición directa del registro técnico o de seguridad.
+
 ## Integridad financiera y disponibilidad
 
 Los controles de seguridad incluyen integridad:
@@ -239,7 +257,23 @@ Los controles de seguridad incluyen integridad:
 - snapshots y agregados reconciliables con el ledger;
 - permisos mínimos para aplicaciones, workers y operadores.
 
+[ADR-004](adr/0004-estados-preview-confirmacion-y-correcciones.md), **Aceptado**, añade una frontera de
+autorización transaccional contra alteración y replay: snapshot inmutable vinculado a actor/hogar,
+digest y versión exactos, TTL de servidor, consumo único, reautorización final y
+posting/idempotencia/auditoría en un solo commit. Un preview no concede autorización por sí mismo y
+la IA no puede consumirlo autónomamente. Estos controles aún no están implementados.
+
 Un incidente que altere, duplique, oculte o mezcle movimientos se trata como incidente de seguridad e integridad, no solo como bug funcional.
+
+[ADR-002](adr/0002-representacion-monetaria-moneda-redondeo-y-division.md) y
+[ADR-009](adr/0009-fechas-financieras-zona-horaria-y-periodos.md) ya son decisiones aceptadas para
+exactitud y semántica temporal. Las decisiones aceptadas
+[ADR-003](adr/0003-ledger-signos-cuentas-tecnicas-e-invariantes.md) y
+[ADR-008](adr/0008-idempotencia-concurrencia-y-alcance-de-claves.md) concretan balance/inmutabilidad
+y deduplicación concurrente, pero aún no son controles implementados ni desplegados. Al
+implementarse, el claim idempotente, ledger y auditoría deberán compartir la misma transacción
+corta de escritura de ADR-021; claves, fingerprints y payloads financieros no se expondrán en
+logs.
 
 ## Retención, exportación y eliminación
 
@@ -330,14 +364,15 @@ Antes de beta deben existir responsables y runbooks para:
 
 La evidencia de un incidente se preserva con acceso restringido y sin ampliar innecesariamente la exposición.
 
-## Decisiones pendientes de ADR
+## Decisiones y controles pendientes
 
-- aplicar las restricciones obligatorias de
-  [ADR-021](adr/0021-postgresql-rls-para-aislamiento-multi-household.md) al diseñar las primeras
-  tablas financieras de Fase 3;
+- aplicar ADR-002/ADR-003/ADR-008/ADR-009 junto con las restricciones
+  obligatorias de [ADR-021](adr/0021-postgresql-rls-para-aislamiento-multi-household.md) al diseñar
+  las primeras tablas financieras de Fase 3;
 - clasificación, retención, exportación y eliminación;
 - cifrado adicional a nivel de campo y gestión de claves;
-- auditoría, redacción, acceso de soporte y observabilidad;
+- implementar el baseline aceptado de ADR-019 mediante las historias autorizadas, incluidos
+  eventos de seguridad relevantes, controles de soporte/break-glass y proyección UX del historial;
 - tratamiento de datos por OpenAI y otros proveedores;
 - notificaciones y contenido permitido;
 - backups, RPO/RTO y continuidad;

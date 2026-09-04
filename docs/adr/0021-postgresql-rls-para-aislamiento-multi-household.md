@@ -89,7 +89,9 @@ escrituras.
 
 La decisión fue aceptada explícitamente el 3 de septiembre de 2026. Esto desbloquea el gate de RLS
 previo a Fase 3, pero no inicia Fase 3 ni autoriza por sí solo tablas financieras: los demás ADR y
-gates financieros requeridos siguen pendientes.
+gates financieros requeridos seguían pendientes en esa fecha. La aceptación de ADR-019 el
+2026-09-04 cerró el último de ellos; Fase 3 continúa sin iniciar y requiere un execution plan
+funcional autorizado según el [estado vigente](../project-state.md).
 
 ## Arquitectura propuesta
 
